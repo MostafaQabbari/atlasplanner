@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - EVENTS_SERVICE_URL=http://events-service:8080
+    depends_on:
+      - events-service
+    volumes:
+      - ./backend:/app
+    networks:
+      - atlasplanner-net
+
+  events-service:
+    build: ./events-service
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    networks:
+      - atlasplanner-net
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - atlasplanner-net
+
+networks:
+  atlasplanner-net:
+    driver: bridge

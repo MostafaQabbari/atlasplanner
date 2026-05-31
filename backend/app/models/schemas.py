@@ -1,0 +1,83 @@
+from pydantic import BaseModel
+from typing import Optional
+
+
+# ── Quiz ──────────────────────────────────────────
+class QuizAnswer(BaseModel):
+    question_id: str
+    answer: str
+
+
+class QuizSubmission(BaseModel):
+    answers: list[QuizAnswer]
+
+
+class PersonalityProfile(BaseModel):
+    traveler_type: str          # e.g. "Adventure Seeker", "Culture Lover"
+    pace: str                   # "slow", "moderate", "fast"
+    social: str                 # "solo", "couple", "group"
+    interests: list[str]        # ["food", "history", "nature", ...]
+    avoid: list[str]            # ["crowds", "museums", "beaches", ...]
+    budget_style: str           # "backpacker", "mid-range", "luxury"
+    raw_answers: list[QuizAnswer]
+
+
+# ── Recommendation Request ─────────────────────────
+class RecommendRequest(BaseModel):
+    profile: PersonalityProfile
+    travel_start: str           # ISO date e.g. "2025-08-01"
+    travel_end: str             # ISO date e.g. "2025-08-14"
+    budget_eur: int             # total budget in EUR
+    excluded_countries: Optional[list[str]] = []
+
+
+class CountryCard(BaseModel):
+    country: str
+    why_it_fits: str
+    weather_summary: str
+    budget_fit: str             # "perfect", "tight", "comfortable"
+    visa_info: str
+    currency: str
+    best_cities: list[str]
+    wildcard_fact: str
+    image_url: Optional[str] = None
+    match_score: int            # 0-100
+
+
+class RecommendResponse(BaseModel):
+    recommendations: list[CountryCard]
+
+
+# ── Plan Request ───────────────────────────────────
+class PlanRequest(BaseModel):
+    profile: PersonalityProfile
+    country: str
+    city: str
+    travel_start: str
+    travel_end: str
+    budget_eur: int
+
+
+class DayActivity(BaseModel):
+    time: str
+    title: str
+    description: str
+    location: str
+    type: str                   # "food", "culture", "nature", "event", "hidden_gem"
+    estimated_cost_eur: Optional[float] = None
+
+
+class DayPlan(BaseModel):
+    date: str
+    weather: Optional[str] = None
+    theme: str
+    activities: list[DayActivity]
+    events: Optional[list[str]] = []
+
+
+class PlanResponse(BaseModel):
+    country: str
+    city: str
+    days: list[DayPlan]
+    total_estimated_cost_eur: Optional[float] = None
+    tips: list[str]
