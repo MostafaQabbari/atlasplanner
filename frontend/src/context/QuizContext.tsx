@@ -11,6 +11,7 @@ interface TravelDates {
 interface SelectedCountry {
   country: string;
   city: string;
+  match_score?: number;
 }
 
 interface QuizContextType {

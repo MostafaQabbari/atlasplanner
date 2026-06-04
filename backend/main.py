@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import quiz, recommend, plan, weather, places
+from app.routes import quiz, recommend, plan, weather, places, trips
 
 app = FastAPI(
     title="AtlasPlanner API",
@@ -21,6 +21,7 @@ app.include_router(recommend.router, prefix="/api/recommend", tags=["Recommendat
 app.include_router(plan.router, prefix="/api/plan", tags=["Plan"])
 app.include_router(weather.router, prefix="/api/weather", tags=["Weather"])
 app.include_router(places.router, prefix="/api/places", tags=["Places"])
+app.include_router(trips.router, prefix="/api/trips", tags=["Trips"])
 
 
 @app.get("/")
