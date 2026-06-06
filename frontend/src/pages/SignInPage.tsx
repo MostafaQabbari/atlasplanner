@@ -46,7 +46,7 @@ const SignInPage: React.FC = () => {
     setLoading(true);
     try {
       await login(email, password);
-      navigate("/dashboard");
+      navigate("/quiz");
     } catch {
       setError("Invalid email or password. Please try again.");
     } finally {

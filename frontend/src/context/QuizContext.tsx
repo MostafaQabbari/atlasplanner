@@ -35,16 +35,17 @@ interface QuizContextType {
 const QuizContext = createContext<QuizContextType | null>(null);
 
 export const QuizProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [screen, setScreen]                       = useState<Screen>("welcome");
-  const [profile, setProfile]                     = useState<PersonalityProfile | null>(null);
-  const [travelDates, setTravelDates]             = useState<TravelDates>({ start: "", end: "" });
-  const [budget, setBudget]                       = useState(2000);
-  const [recommendations, setRecommendations]     = useState<CountryCard[] | null>(null);
-  const [selectedCountry, setSelectedCountry]     = useState<SelectedCountry | null>(null);
-  const [plan, setPlan]                           = useState<TravelPlan | null>(null);
+  // ← changed default from "welcome" to "quiz" so the quiz renders immediately
+  const [screen, setScreen]                   = useState<Screen>("quiz");
+  const [profile, setProfile]                 = useState<PersonalityProfile | null>(null);
+  const [travelDates, setTravelDates]         = useState<TravelDates>({ start: "", end: "" });
+  const [budget, setBudget]                   = useState(2000);
+  const [recommendations, setRecommendations] = useState<CountryCard[] | null>(null);
+  const [selectedCountry, setSelectedCountry] = useState<SelectedCountry | null>(null);
+  const [plan, setPlan]                       = useState<TravelPlan | null>(null);
 
   const resetAll = () => {
-    setScreen("welcome");
+    setScreen("quiz"); // ← reset back to quiz, not welcome
     setProfile(null);
     setTravelDates({ start: "", end: "" });
     setBudget(2000);
