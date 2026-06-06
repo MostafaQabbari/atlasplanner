@@ -29,4 +29,13 @@ public class UserProfile {
 
     @Column(columnDefinition = "TEXT")
     private String interests;
+
+    @Column(length = 100)
+    private String nationality;
+
+    private String accommodation;
+    private String languageComfort;
+    private String scenery;
+    private String safetyPriority;
+    private String duration;
 }

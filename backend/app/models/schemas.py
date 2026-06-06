@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 
 # ── Quiz ──────────────────────────────────────────
@@ -19,6 +19,12 @@ class PersonalityProfile(BaseModel):
     interests: list[str]        # ["food", "history", "nature", ...]
     avoid: list[str]            # ["crowds", "museums", "beaches", ...]
     budget_style: str           # "backpacker", "mid-range", "luxury"
+    nationality: str = "Unknown"
+    duration: Optional[str] = None
+    accommodation: Optional[str] = None
+    language_comfort: Optional[str] = None
+    scenery: Optional[str] = None
+    safety_priority: Optional[str] = None
     raw_answers: list[QuizAnswer]
 
 
@@ -29,6 +35,7 @@ class RecommendRequest(BaseModel):
     travel_end: str             # ISO date e.g. "2025-08-14"
     budget_eur: int             # total budget in EUR
     excluded_countries: Optional[list[str]] = []
+    nationality: str = "Unknown"
 
 
 class CountryCard(BaseModel):
@@ -56,6 +63,7 @@ class PlanRequest(BaseModel):
     travel_start: str
     travel_end: str
     budget_eur: int
+    customizations: List[str] = []
 
 
 class DayActivity(BaseModel):

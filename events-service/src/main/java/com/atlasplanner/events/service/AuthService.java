@@ -24,10 +24,12 @@ public class AuthService {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email already registered");
         }
+        String nationality = request.getNationality() != null ? request.getNationality() : "Unknown";
         User user = User.builder()
                 .email(request.getEmail())
                 .name(request.getName())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .nationality(nationality)
                 .build();
         userRepository.save(user);
         String token = jwtService.generateToken(user);
@@ -36,6 +38,7 @@ public class AuthService {
                 .userId(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
+                .nationality(user.getNationality())
                 .build();
     }
 
@@ -51,6 +54,7 @@ public class AuthService {
                 .userId(user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
+                .nationality(user.getNationality())
                 .build();
     }
 

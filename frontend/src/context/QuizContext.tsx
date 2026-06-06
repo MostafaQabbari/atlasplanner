@@ -29,13 +29,14 @@ interface QuizContextType {
   setSelectedCountry: (c: SelectedCountry) => void;
   plan: TravelPlan | null;
   setPlan: (p: TravelPlan | null) => void;
+  nationality: string;
+  setNationality: (n: string) => void;
   resetAll: () => void;
 }
 
 const QuizContext = createContext<QuizContextType | null>(null);
 
 export const QuizProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // ← changed default from "welcome" to "quiz" so the quiz renders immediately
   const [screen, setScreen]                   = useState<Screen>("quiz");
   const [profile, setProfile]                 = useState<PersonalityProfile | null>(null);
   const [travelDates, setTravelDates]         = useState<TravelDates>({ start: "", end: "" });
@@ -43,15 +44,17 @@ export const QuizProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [recommendations, setRecommendations] = useState<CountryCard[] | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<SelectedCountry | null>(null);
   const [plan, setPlan]                       = useState<TravelPlan | null>(null);
+  const [nationality, setNationality]         = useState<string>("");
 
   const resetAll = () => {
-    setScreen("quiz"); // ← reset back to quiz, not welcome
+    setScreen("quiz");
     setProfile(null);
     setTravelDates({ start: "", end: "" });
     setBudget(2000);
     setRecommendations(null);
     setSelectedCountry(null);
     setPlan(null);
+    setNationality("");
   };
 
   return (
@@ -64,6 +67,7 @@ export const QuizProvider: React.FC<{ children: React.ReactNode }> = ({ children
         recommendations, setRecommendations,
         selectedCountry, setSelectedCountry,
         plan, setPlan,
+        nationality, setNationality,
         resetAll,
       }}
     >

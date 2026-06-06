@@ -9,7 +9,12 @@ const MESSAGES = [
   "Almost ready...",
 ];
 
-export const PlanLoading: React.FC = () => {
+interface Props {
+  destination?: string;
+  slowMessage?: boolean;
+}
+
+export const PlanLoading: React.FC<Props> = ({ destination, slowMessage }) => {
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
@@ -19,6 +24,12 @@ export const PlanLoading: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-8 px-4">
+      {destination && (
+        <p className="text-white font-semibold text-lg text-center" style={{ fontFamily: "'Playfair Display', serif" }}>
+          Planning your trip to {destination}
+        </p>
+      )}
+
       <div className="relative">
         <motion.div
           animate={{ rotate: 360 }}
@@ -40,6 +51,16 @@ export const PlanLoading: React.FC = () => {
       >
         {MESSAGES[idx]}
       </motion.p>
+
+      {slowMessage && (
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-gray-400 text-sm text-center max-w-xs"
+        >
+          This is taking longer than usual… Claude is working on a detailed itinerary for you.
+        </motion.p>
+      )}
     </div>
   );
 };

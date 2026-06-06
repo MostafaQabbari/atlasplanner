@@ -10,6 +10,12 @@ export interface PersonalityProfile {
   interests: string[];
   avoid: string[];
   budget_style: string;
+  nationality: string;
+  duration?: string;
+  accommodation?: string;
+  language_comfort?: string;
+  scenery?: string;
+  safety_priority?: string;
   raw_answers: QuizAnswer[];
 }
 
@@ -57,4 +63,5 @@ export interface RecommendRequest {
   travel_end: string;
   budget_eur: number;
   excluded_countries?: string[];
+  nationality?: string;
 }

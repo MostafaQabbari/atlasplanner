@@ -6,15 +6,29 @@ import { useNavigate } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext";
 import { QuizProvider, useQuiz } from "./context/QuizContext";
+import { useAuth } from "./hooks/useAuth";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
-import LandingPage from "./pages/LandingPage";
+import { LandingPage } from "./pages/LandingPage";
 import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
 import DashboardPage from "./pages/DashboardPage";
 import { QuizPage } from "./pages/QuizPage";
 import { RecommendationsPage } from "./pages/RecommendationsPage";
 import { PlanPage } from "./pages/PlanPage";
+
+// --------------- Landing wrapper (provides required props) ---------------
+const LandingWrapper: React.FC = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  return (
+    <LandingPage
+      onStart={() => navigate("/quiz")}
+      isLoggedIn={isAuthenticated}
+      onSignIn={() => navigate("/signin")}
+    />
+  );
+};
 
 // --------------- Quiz flow shell (wraps the 3-screen quiz) ---------------
 const QuizShellNav: React.FC = () => {
@@ -83,7 +97,7 @@ const App: React.FC = () => (
   <BrowserRouter>
     <AuthProvider>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<LandingWrapper />} />
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/signup" element={<SignUpPage />} />
 

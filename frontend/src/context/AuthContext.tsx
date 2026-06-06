@@ -10,8 +10,9 @@ interface AuthUser {
 interface AuthContextValue {
   user: AuthUser | null;
   token: string | null;
+  isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, keepLoggedIn?: boolean) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 }
@@ -33,44 +34,55 @@ function decodeToken(token: string): AuthUser | null {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem(TOKEN_KEY);
-    if (stored) {
-      const decoded = decodeToken(stored);
-      if (decoded) {
-        setToken(stored);
-        setUser(decoded);
-      } else {
-        localStorage.removeItem(TOKEN_KEY);
+    try {
+      const stored = localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
+      if (stored) {
+        const decoded = decodeToken(stored);
+        if (decoded) {
+          setToken(stored);
+          setUser(decoded);
+        } else {
+          localStorage.removeItem(TOKEN_KEY);
+          sessionStorage.removeItem(TOKEN_KEY);
+        }
       }
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
-  const persist = (tok: string) => {
-    localStorage.setItem(TOKEN_KEY, tok);
+  const login = useCallback(async (email: string, password: string, keepLoggedIn = true) => {
+    const { data } = await axios.post(`${API_BASE}/api/auth/signin`, { email, password });
+    const tok: string = data.token;
+    if (keepLoggedIn) {
+      localStorage.setItem(TOKEN_KEY, tok);
+    } else {
+      sessionStorage.setItem(TOKEN_KEY, tok);
+    }
     setToken(tok);
     setUser(decodeToken(tok));
-  };
-
-  const login = useCallback(async (email: string, password: string) => {
-    const { data } = await axios.post(`${API_BASE}/api/auth/signin`, { email, password });
-    persist(data.token);
   }, []);
 
   const signup = useCallback(async (name: string, email: string, password: string) => {
     const { data } = await axios.post(`${API_BASE}/api/auth/signup`, { name, email, password });
-    persist(data.token);
+    const tok: string = data.token;
+    localStorage.setItem(TOKEN_KEY, tok);
+    setToken(tok);
+    setUser(decodeToken(tok));
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setUser(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, isAuthenticated: !!user, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, isAuthenticated: !!user, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );

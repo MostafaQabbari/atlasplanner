@@ -4,6 +4,7 @@ import com.atlasplanner.events.dto.SaveTripRequest;
 import com.atlasplanner.events.dto.TripResponse;
 import com.atlasplanner.events.model.SavedTrip;
 import com.atlasplanner.events.repository.SavedTripRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,8 +17,18 @@ import java.util.stream.Collectors;
 public class TripService {
 
     private final SavedTripRepository tripRepository;
+    private final ObjectMapper objectMapper;
 
     public TripResponse saveTrip(UUID userId, SaveTripRequest request) {
+        String customizationsJson = null;
+        if (request.getCustomizations() != null && !request.getCustomizations().isEmpty()) {
+            try {
+                customizationsJson = objectMapper.writeValueAsString(request.getCustomizations());
+            } catch (Exception e) {
+                customizationsJson = "[]";
+            }
+        }
+
         SavedTrip trip = SavedTrip.builder()
                 .userId(userId)
                 .country(request.getCountry())
@@ -26,6 +37,8 @@ public class TripService {
                 .endDate(request.getEndDate())
                 .planJson(request.getPlanJson())
                 .matchScore(request.getMatchScore())
+                .nationality(request.getNationality())
+                .customizationsJson(customizationsJson)
                 .build();
         tripRepository.save(trip);
         return toResponse(trip);

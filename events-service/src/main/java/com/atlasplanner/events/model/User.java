@@ -34,12 +34,16 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String passwordHash;
 
+    @Column(length = 100)
+    private String nationality;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        if (nationality == null) nationality = "Unknown";
     }
 
     @Override

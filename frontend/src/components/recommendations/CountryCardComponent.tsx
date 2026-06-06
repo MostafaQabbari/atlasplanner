@@ -7,7 +7,7 @@ import { MatchScoreRing } from "./MatchScoreRing";
 interface Props {
   card: CountryCard;
   index: number;
-  onSelect: (country: string, city: string) => void;
+  onSelect: (country: string, city: string, matchScore: number) => void;
 }
 
 const budgetMeta = {
@@ -88,7 +88,7 @@ export const CountryCardComponent: React.FC<Props> = ({ card, index, onSelect })
           {expanded ? "Less" : "More info"}
         </button>
         <button
-          onClick={() => onSelect(card.country, card.best_cities[0])}
+          onClick={() => onSelect(card.country, card.best_cities[0], card.match_score)}
           className="flex-1 py-2.5 text-sm font-semibold bg-[#5bc4a0] text-[#042c53] rounded-xl hover:bg-[#4aab8d] transition-colors"
         >
           Plan this trip →

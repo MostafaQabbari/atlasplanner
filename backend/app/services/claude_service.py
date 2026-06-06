@@ -3,27 +3,54 @@ import re
 import json
 import asyncio
 import anthropic
-from app.models.schemas import PersonalityProfile, CountryCard, DayPlan
+from app.models.schemas import PersonalityProfile, CountryCard
 
 client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+MODEL = "claude-sonnet-4-6"
 
 
 def extract_json(text: str):
-    """Robustly extract JSON from Claude's response even if it adds markdown or commentary."""
+    """Extract JSON from Claude response — handles markdown, truncation, and commentary."""
     text = text.strip()
-
-    # Remove markdown code fences if present: ```json ... ``` or ``` ... ```
+    # Strip markdown fences
     text = re.sub(r"^```(?:json)?\s*", "", text)
-    text = re.sub(r"\s*```$", "", text.strip())
-    text = text.strip()
+    text = re.sub(r"\s*```$", "", text.strip()).strip()
 
-    # Try direct parse first
+    # Direct parse
     try:
         return json.loads(text)
     except json.JSONDecodeError:
         pass
 
-    # Try to find a JSON array
+    # Find JSON object — try to fix truncation by closing open braces
+    match = re.search(r"\{.*", text, re.DOTALL)
+    if match:
+        candidate = match.group()
+        # Try direct parse first
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            pass
+        # Count open vs closed braces and add missing closing braces
+        open_b = candidate.count("{")
+        close_b = candidate.count("}")
+        open_a = candidate.count("[")
+        close_a = candidate.count("]")
+        # Remove trailing incomplete line before closing
+        lines = candidate.rstrip().split("\n")
+        while lines and not lines[-1].strip().startswith('"') and lines[-1].strip() not in ["}", "]", "},", "],"]:
+            lines.pop()
+        candidate = "\n".join(lines)
+        # Add missing closings
+        candidate = candidate.rstrip().rstrip(",")
+        candidate += "]" * max(0, open_a - close_a)
+        candidate += "}" * max(0, open_b - close_b)
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            pass
+
+    # Find JSON array
     match = re.search(r"\[.*\]", text, re.DOTALL)
     if match:
         try:
@@ -31,15 +58,23 @@ def extract_json(text: str):
         except json.JSONDecodeError:
             pass
 
-    # Try to find a JSON object
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if match:
-        try:
-            return json.loads(match.group())
-        except json.JSONDecodeError:
-            pass
+    raise ValueError(f"Cannot parse JSON. First 300 chars: {text[:300]}")
 
-    raise ValueError(f"Could not extract JSON from response. First 300 chars: {text[:300]}")
+
+def _claude_sync(prompt: str, max_tokens: int) -> str:
+    """Synchronous Claude call — always run via run_in_executor."""
+    msg = client.messages.create(
+        model=MODEL,
+        max_tokens=max_tokens,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return msg.content[0].text
+
+
+async def call_claude(prompt: str, max_tokens: int = 1500) -> str:
+    """Non-blocking async wrapper around sync Anthropic client."""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, lambda: _claude_sync(prompt, max_tokens))
 
 
 def build_recommendation_prompt(
@@ -47,44 +82,38 @@ def build_recommendation_prompt(
     travel_start: str,
     travel_end: str,
     budget_eur: int,
-    excluded_countries: list[str],
+    excluded_countries: list,
 ) -> str:
-    return f"""You are AtlasPlanner's AI travel expert. Based on the traveler profile below, recommend exactly 3 countries.
+    avoid = ", ".join(profile.avoid) if profile.avoid else "nothing specific"
+    excluded = ", ".join(excluded_countries) if excluded_countries else "none"
+    interests = ", ".join(profile.interests) if profile.interests else "general travel"
+    return f"""You are AtlasPlanner's AI travel expert. Recommend exactly 3 countries.
 
-TRAVELER PROFILE:
-- Type: {profile.traveler_type}
-- Pace: {profile.pace}
-- Travel style: {profile.social}
-- Interests: {', '.join(profile.interests)}
-- Wants to avoid: {', '.join(profile.avoid) if profile.avoid else 'Nothing specific'}
-- Budget style: {profile.budget_style}
+TRAVELER: {profile.traveler_type}, {profile.pace} pace, traveling {profile.social}
+INTERESTS: {interests}
+AVOIDS: {avoid}
+BUDGET STYLE: {profile.budget_style}
+TRIP: {travel_start} to {travel_end}, total €{budget_eur}
+EXCLUDE: {excluded}
 
-TRIP DETAILS:
-- Travel dates: {travel_start} to {travel_end}
-- Total budget: €{budget_eur}
-- Excluded countries: {', '.join(excluded_countries) if excluded_countries else 'None'}
+CRITICAL: Your ENTIRE response must be a JSON array. Start with [ end with ]. Zero other text.
 
-Consider weather/season, budget fit, personality match, and visa ease for German passport holders.
-
-IMPORTANT: Your entire response must be ONLY a JSON array. Start with [ and end with ]. No markdown, no code fences, no explanation before or after.
-
-Return exactly this structure:
 [
   {{
     "country": "string",
-    "why_it_fits": "2-3 sentences explaining personality match",
-    "weather_summary": "what weather to expect during those dates",
+    "why_it_fits": "2-3 sentences",
+    "weather_summary": "weather during those dates",
     "budget_fit": "perfect",
-    "visa_info": "visa requirements for German passport holders",
-    "currency": "local currency name and rough EUR exchange",
-    "best_cities": ["city1", "city2", "city3"],
-    "wildcard_fact": "one surprising or delightful fact about traveling there",
-    "match_score": 92
+    "visa_info": "visa requirements",
+    "currency": "currency and EUR rate",
+    "best_cities": ["City1", "City2", "City3"],
+    "wildcard_fact": "surprising fact",
+    "match_score": 88
   }}
 ]
 
-budget_fit must be exactly one of: perfect, tight, comfortable
-match_score must be a number between 0 and 100"""
+budget_fit = perfect OR tight OR comfortable (exactly one of these three words)
+match_score = integer 0-100"""
 
 
 def build_plan_prompt(
@@ -95,52 +124,56 @@ def build_plan_prompt(
     travel_end: str,
     budget_eur: int,
 ) -> str:
-    return f"""You are AtlasPlanner's AI itinerary builder. Create a day-by-day travel plan.
+    from datetime import datetime
+    try:
+        d = (datetime.fromisoformat(travel_end) - datetime.fromisoformat(travel_start)).days
+        num_days = min(max(d, 1), 5)
+    except Exception:
+        num_days = 3
 
-TRAVELER PROFILE:
-- Type: {profile.traveler_type}
-- Pace: {profile.pace}
-- Travel style: {profile.social}
-- Interests: {', '.join(profile.interests)}
-- Wants to avoid: {', '.join(profile.avoid) if profile.avoid else 'Nothing specific'}
+    per_day = 2 if profile.pace in ("slow", "moderate") else 4
+    avoid = ", ".join(profile.avoid) if profile.avoid else "nothing"
+    interests = ", ".join(profile.interests) if profile.interests else "general"
 
-TRIP DETAILS:
-- Destination: {city}, {country}
-- Dates: {travel_start} to {travel_end}
-- Total budget: €{budget_eur}
+    return f"""You are AtlasPlanner's itinerary builder. Create a {num_days}-day plan.
 
-Rules:
-- slow pace = max 2-3 activities/day, fast = 4-5 activities/day
-- Include at least one local food experience per day
-- Include hidden gems, not just tourist traps
-- Include estimated costs in EUR
-- Give each day a creative theme name
+DESTINATION: {city}, {country}
+DATES: {travel_start} to {travel_end}
+TRAVELER: {profile.traveler_type}, {profile.pace} pace, {profile.social}
+INTERESTS: {interests} | AVOIDS: {avoid}
+BUDGET: €{budget_eur} total
 
-IMPORTANT: Your entire response must be ONLY a JSON object. Start with {{ and end with }}. No markdown, no code fences, no explanation.
+RULES:
+- Exactly {num_days} days
+- Max {per_day} activities per day
+- At least 1 food activity per day
+- Mix hidden gems with classics
 
-Return exactly this structure:
+CRITICAL: Your ENTIRE response must be a JSON object. Start with {{ end with }}. Zero other text.
+
 {{
   "days": [
     {{
-      "date": "YYYY-MM-DD",
-      "theme": "Creative day theme",
+      "date": "2025-08-01",
+      "theme": "Creative day title",
       "activities": [
         {{
           "time": "09:00",
           "title": "Activity name",
-          "description": "What to do and why it's special",
-          "location": "Specific location name",
+          "description": "What to do and why special",
+          "location": "Specific venue or area",
           "type": "culture",
           "estimated_cost_eur": 15.0
         }}
       ]
     }}
   ],
-  "total_estimated_cost_eur": 450.0,
-  "tips": ["tip1", "tip2", "tip3"]
+  "total_estimated_cost_eur": 350.0,
+  "tips": ["Local tip 1", "Local tip 2", "Local tip 3"]
 }}
 
-type must be exactly one of: food, culture, nature, event, hidden_gem"""
+type must be exactly one of: food, culture, nature, event, hidden_gem
+Generate exactly {num_days} days. First day date: {travel_start}"""
 
 
 async def get_country_recommendations(
@@ -148,25 +181,15 @@ async def get_country_recommendations(
     travel_start: str,
     travel_end: str,
     budget_eur: int,
-    excluded_countries: list[str],
-) -> list[CountryCard]:
+    excluded_countries: list,
+) -> list:
     prompt = build_recommendation_prompt(
         profile, travel_start, travel_end, budget_eur, excluded_countries
     )
-
-    # Run sync client in thread pool to avoid blocking the async event loop
-    message = await asyncio.get_event_loop().run_in_executor(
-        None,
-        lambda: client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=1500,
-            messages=[{"role": "user", "content": prompt}],
-        ),
-    )
-
-    raw = message.content[0].text
+    print(f"[claude] Getting recommendations...")
+    raw = await call_claude(prompt, max_tokens=1500)
+    print(f"[claude] Got recommendations response, length: {len(raw)}")
     data = extract_json(raw)
-
     return [CountryCard(**item) for item in data]
 
 
@@ -181,16 +204,14 @@ async def generate_travel_plan(
     prompt = build_plan_prompt(
         profile, country, city, travel_start, travel_end, budget_eur
     )
+    print(f"[claude] Generating plan for {city}, {country}...")
+    raw = await call_claude(prompt, max_tokens=4000)
+    print(f"[claude] Got plan response, length: {len(raw)}")
+    result = extract_json(raw)
 
-    # Run sync client in thread pool to avoid blocking the async event loop
-    message = await asyncio.get_event_loop().run_in_executor(
-        None,
-        lambda: client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=3000,
-            messages=[{"role": "user", "content": prompt}],
-        ),
-    )
+    # If Claude returned a list instead of the expected dict, wrap it
+    if isinstance(result, list):
+        result = {"days": result, "total_estimated_cost_eur": None, "tips": []}
 
-    raw = message.content[0].text
-    return extract_json(raw)
+    print(f"[claude] Parsed plan, days: {len(result.get('days', []))}")
+    return result

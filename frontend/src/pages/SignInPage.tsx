@@ -23,10 +23,11 @@ const SignInPage: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail]           = useState("");
+  const [password, setPassword]     = useState("");
+  const [keepLoggedIn, setKeepLoggedIn] = useState(true);
+  const [error, setError]           = useState<string | null>(null);
+  const [loading, setLoading]       = useState(false);
 
   const inputStyle: React.CSSProperties = {
     background: "rgba(255,255,255,0.07)",
@@ -45,7 +46,7 @@ const SignInPage: React.FC = () => {
     setError(null);
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email, password, keepLoggedIn);
       navigate("/quiz");
     } catch {
       setError("Invalid email or password. Please try again.");
@@ -58,10 +59,7 @@ const SignInPage: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#042c53" }}>
       <Starfield />
 
-      <div
-        className="relative z-10 w-full"
-        style={{ maxWidth: 400 }}
-      >
+      <div className="relative z-10 w-full" style={{ maxWidth: 400 }}>
         <div
           style={{
             background: "rgba(255,255,255,0.05)",
@@ -98,6 +96,32 @@ const SignInPage: React.FC = () => {
               required
               style={inputStyle}
             />
+
+            {/* Keep me logged in */}
+            <label
+              style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none" }}
+              onClick={() => setKeepLoggedIn((v) => !v)}
+            >
+              <span
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 4,
+                  border: `2px solid ${keepLoggedIn ? "#5bc4a0" : "rgba(255,255,255,0.3)"}`,
+                  background: keepLoggedIn ? "#5bc4a0" : "transparent",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  transition: "all 0.15s",
+                }}
+              >
+                {keepLoggedIn && (
+                  <span style={{ color: "#042c53", fontSize: 11, fontWeight: 900, lineHeight: 1 }}>✓</span>
+                )}
+              </span>
+              <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>Keep me logged in</span>
+            </label>
 
             {error && (
               <p style={{ color: "#f87171", fontSize: 13, textAlign: "center" }}>{error}</p>

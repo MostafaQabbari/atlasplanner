@@ -34,6 +34,12 @@ public class SavedTrip {
 
     private Integer matchScore;
 
+    @Column(length = 100)
+    private String nationality;
+
+    @Column(columnDefinition = "TEXT")
+    private String customizationsJson;
+
     @Column(nullable = false)
     private LocalDateTime savedAt;
 

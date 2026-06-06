@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useQuiz } from "../context/QuizContext";
 import { CountryCardComponent } from "../components/recommendations/CountryCardComponent";
 import { ProfileBadge } from "../components/recommendations/ProfileBadge";
-import { getRecommendations } from "../services/api";
+import { PlanLoading } from "../components/plan/PlanLoading";
+import { getRecommendations, generatePlan } from "../services/api";
+
+const SLOW_THRESHOLD_MS = 15000;
 
 export const RecommendationsPage: React.FC = () => {
   const {
@@ -13,11 +16,18 @@ export const RecommendationsPage: React.FC = () => {
     recommendations,
     setRecommendations,
     setSelectedCountry,
+    setPlan,
     setScreen,
   } = useQuiz();
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState<string | null>(null);
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState<string | null>(null);
+
+  // Plan loading state
+  const [planLoading, setPlanLoading]     = useState(false);
+  const [planError, setPlanError]         = useState<string | null>(null);
+  const [slowMessage, setSlowMessage]     = useState(false);
+  const [pendingCountry, setPendingCountry] = useState<{ country: string; city: string; matchScore: number } | null>(null);
 
   useEffect(() => {
     if (!profile || recommendations) return;
@@ -31,6 +41,7 @@ export const RecommendationsPage: React.FC = () => {
           travel_start: travelDates.start,
           travel_end:   travelDates.end,
           budget_eur:   budget,
+          nationality:  profile.nationality,
         });
         setRecommendations(res.recommendations);
       } catch {
@@ -43,9 +54,40 @@ export const RecommendationsPage: React.FC = () => {
     load();
   }, [profile]);
 
-  const handleSelect = (country: string, city: string) => {
-    setSelectedCountry({ country, city });
-    setScreen("plan");
+  const handleSelect = async (country: string, city: string, matchScore: number) => {
+    if (planLoading) return;
+    setPendingCountry({ country, city, matchScore });
+    setPlanLoading(true);
+    setPlanError(null);
+    setSlowMessage(false);
+
+    const slowTimer = setTimeout(() => setSlowMessage(true), SLOW_THRESHOLD_MS);
+
+    try {
+      const result = await generatePlan({
+        profile: profile!,
+        country,
+        city,
+        travel_start: travelDates.start,
+        travel_end:   travelDates.end,
+        budget_eur:   budget,
+      });
+
+      setPlan(result);
+      setSelectedCountry({ country, city, match_score: matchScore });
+      setScreen("plan");
+    } catch {
+      setPlanError("Couldn't generate your plan — please try again.");
+    } finally {
+      clearTimeout(slowTimer);
+      setPlanLoading(false);
+    }
+  };
+
+  const handleRetry = () => {
+    if (!pendingCountry) return;
+    const { country, city, matchScore } = pendingCountry;
+    handleSelect(country, city, matchScore);
   };
 
   if (!profile) {
@@ -55,6 +97,18 @@ export const RecommendationsPage: React.FC = () => {
         <button onClick={() => setScreen("quiz")} className="text-[#5bc4a0] underline">
           Retake quiz
         </button>
+      </div>
+    );
+  }
+
+  // Show plan loading overlay
+  if (planLoading && pendingCountry) {
+    return (
+      <div className="relative">
+        <PlanLoading
+          destination={`${pendingCountry.city}, ${pendingCountry.country}`}
+          slowMessage={slowMessage}
+        />
       </div>
     );
   }
@@ -90,6 +144,25 @@ export const RecommendationsPage: React.FC = () => {
           </button>
         </div>
       )}
+
+      <AnimatePresence>
+        {planError && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="mb-6 bg-red-900/30 border border-red-500/30 rounded-2xl p-5 text-center"
+          >
+            <p className="text-red-300 text-sm mb-3">{planError}</p>
+            <button
+              onClick={handleRetry}
+              className="text-[#5bc4a0] text-sm font-semibold hover:underline"
+            >
+              Try again →
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {recommendations && !loading && (
         <div className="space-y-4">
