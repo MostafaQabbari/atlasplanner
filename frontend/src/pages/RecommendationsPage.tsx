@@ -7,12 +7,14 @@ import { PlanLoading } from "../components/plan/PlanLoading";
 import { getRecommendations, generatePlan } from "../services/api";
 
 const SLOW_THRESHOLD_MS = 15000;
+const UNSPLASH_KEY = import.meta.env.VITE_UNSPLASH_ACCESS_KEY;
 
 export const RecommendationsPage: React.FC = () => {
   const {
     profile,
     travelDates,
     budget,
+    originCity,
     recommendations,
     setRecommendations,
     setSelectedCountry,
@@ -22,6 +24,10 @@ export const RecommendationsPage: React.FC = () => {
 
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState<string | null>(null);
+  const [ready, setReady]           = useState(!!recommendations); // skip form if already loaded
+  const [pref1, setPref1]           = useState("");
+  const [pref2, setPref2]           = useState("");
+  const [countryPhotos, setCountryPhotos] = useState<Record<string, string>>({});
 
   // Plan loading state
   const [planLoading, setPlanLoading]     = useState(false);
@@ -29,30 +35,51 @@ export const RecommendationsPage: React.FC = () => {
   const [slowMessage, setSlowMessage]     = useState(false);
   const [pendingCountry, setPendingCountry] = useState<{ country: string; city: string; matchScore: number } | null>(null);
 
+  // Fetch Unsplash photos for each country card
   useEffect(() => {
-    if (!profile || recommendations) return;
-
-    const load = async () => {
-      setLoading(true);
-      setError(null);
+    if (!recommendations || !UNSPLASH_KEY) return;
+    recommendations.forEach(async (card) => {
+      if (countryPhotos[card.country]) return;
       try {
-        const res = await getRecommendations({
-          profile,
-          travel_start: travelDates.start,
-          travel_end:   travelDates.end,
-          budget_eur:   budget,
-          nationality:  profile.nationality,
-        });
-        setRecommendations(res.recommendations);
-      } catch {
-        setError("Couldn't load recommendations — please check your connection.");
-      } finally {
-        setLoading(false);
-      }
-    };
+        const resp = await fetch(
+          `https://api.unsplash.com/search/photos?query=${encodeURIComponent(card.country + " travel landscape")}&per_page=1`,
+          { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } }
+        );
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.results?.[0]) {
+            setCountryPhotos(prev => ({
+              ...prev,
+              [card.country]: data.results[0].urls.regular,
+            }));
+          }
+        }
+      } catch {}
+    });
+  }, [recommendations]);
 
-    load();
-  }, [profile]);
+  const fetchRecommendations = async () => {
+    if (!profile) return;
+    setLoading(true);
+    setError(null);
+    const preferred = [pref1, pref2].filter(Boolean);
+    try {
+      const res = await getRecommendations({
+        profile,
+        travel_start: travelDates.start,
+        travel_end:   travelDates.end,
+        budget_eur:   budget,
+        nationality:  profile.nationality,
+        origin_city:  originCity || "",
+        preferred_countries: preferred,
+      });
+      setRecommendations(res.recommendations);
+    } catch {
+      setError("Couldn't load recommendations — please check your connection.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSelect = async (country: string, city: string, matchScore: number) => {
     if (planLoading) return;
@@ -72,6 +99,11 @@ export const RecommendationsPage: React.FC = () => {
         travel_end:   travelDates.end,
         budget_eur:   budget,
       });
+
+      // Save profile to localStorage for ProfilePage
+      try {
+        localStorage.setItem("atlas_profile", JSON.stringify(profile));
+      } catch {}
 
       setPlan(result);
       setSelectedCountry({ country, city, match_score: matchScore });
@@ -125,6 +157,40 @@ export const RecommendationsPage: React.FC = () => {
         <ProfileBadge profile={profile} />
       </motion.div>
 
+      {/* Preferred countries form (shown when not yet fetched) */}
+      {!ready && !recommendations && !loading && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 bg-[#073a6e]/40 border border-[#5bc4a0]/20 rounded-2xl p-6"
+        >
+          <p className="text-white font-semibold mb-1">Do you have any countries in mind?</p>
+          <p className="text-gray-400 text-xs mb-4">Optional — Claude will factor these in but still recommend the best fit.</p>
+          <div className="flex gap-3 mb-5">
+            <input
+              type="text"
+              value={pref1}
+              onChange={e => setPref1(e.target.value)}
+              placeholder="Country 1 (optional)"
+              className="flex-1 bg-[#042c53]/60 border border-[#5bc4a0]/20 rounded-xl px-3 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-[#5bc4a0] text-sm"
+            />
+            <input
+              type="text"
+              value={pref2}
+              onChange={e => setPref2(e.target.value)}
+              placeholder="Country 2 (optional)"
+              className="flex-1 bg-[#042c53]/60 border border-[#5bc4a0]/20 rounded-xl px-3 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-[#5bc4a0] text-sm"
+            />
+          </div>
+          <button
+            onClick={() => { setReady(true); fetchRecommendations(); }}
+            className="w-full py-3.5 bg-[#5bc4a0] text-[#042c53] font-bold rounded-xl hover:bg-[#4aab8d] transition-colors text-sm"
+          >
+            Find my destinations →
+          </button>
+        </motion.div>
+      )}
+
       {loading && (
         <div className="text-center py-14">
           <motion.div
@@ -167,12 +233,30 @@ export const RecommendationsPage: React.FC = () => {
       {recommendations && !loading && (
         <div className="space-y-4">
           {recommendations.map((card, i) => (
-            <CountryCardComponent
-              key={card.country}
-              card={card}
-              index={i}
-              onSelect={handleSelect}
-            />
+            <div key={card.country}>
+              {/* Unsplash banner */}
+              {countryPhotos[card.country] && (
+                <div style={{
+                  height: 160, borderRadius: "16px 16px 0 0", overflow: "hidden",
+                  position: "relative", marginBottom: -16,
+                }}>
+                  <img
+                    src={countryPhotos[card.country]}
+                    alt={card.country}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                  <div style={{
+                    position: "absolute", inset: 0,
+                    background: "linear-gradient(to bottom, transparent 40%, rgba(7,58,110,0.6))",
+                  }} />
+                </div>
+              )}
+              <CountryCardComponent
+                card={card}
+                index={i}
+                onSelect={handleSelect}
+              />
+            </div>
           ))}
         </div>
       )}

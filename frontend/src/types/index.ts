@@ -39,12 +39,14 @@ export interface DayActivity {
   location: string;
   type: "food" | "culture" | "nature" | "event" | "hidden_gem";
   estimated_cost_eur?: number;
+  google_maps_query?: string;
 }
 
 export interface DayPlan {
   date: string;
   theme: string;
   weather?: string;
+  photo_url?: string;
   activities: DayActivity[];
   events?: string[];
 }
@@ -64,4 +66,6 @@ export interface RecommendRequest {
   budget_eur: number;
   excluded_countries?: string[];
   nationality?: string;
+  origin_city?: string;
+  preferred_countries?: string[];
 }

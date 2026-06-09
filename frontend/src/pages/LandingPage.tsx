@@ -1,120 +1,17 @@
-// import React from "react";
-// import { useNavigate } from "react-router-dom";
-// import { motion } from "framer-motion";
-// import { Globe } from "lucide-react";
-
-// const LandingPage: React.FC = () => {
-//   const navigate = useNavigate();
-//   return (
-//     <div className="min-h-screen flex flex-col" style={{ background: "#042c53" }}>
-//       {/* Nav */}
-//       <nav
-//         style={{
-//           position: "sticky",
-//           top: 0,
-//           zIndex: 50,
-//           background: "rgba(4,44,83,0.85)",
-//           backdropFilter: "blur(12px)",
-//           borderBottom: "1px solid rgba(91,196,160,0.12)",
-//           padding: "0 24px",
-//           height: 56,
-//           display: "flex",
-//           alignItems: "center",
-//           justifyContent: "space-between",
-//         }}
-//       >
-//         <div className="flex items-center gap-2" style={{ color: "#5bc4a0", fontWeight: 700, fontSize: 18 }}>
-//           <Globe size={18} />
-//           AtlasPlanner
-//         </div>
-//         <div className="flex items-center gap-3">
-//           <button
-//             onClick={() => navigate("/signin")}
-//             style={{
-//               background: "transparent",
-//               border: "1.5px solid rgba(91,196,160,0.4)",
-//               borderRadius: 8,
-//               color: "#5bc4a0",
-//               padding: "6px 18px",
-//               fontSize: 14,
-//               fontWeight: 600,
-//               cursor: "pointer",
-//             }}
-//           >
-//             Sign in
-//           </button>
-//           <button
-//             onClick={() => navigate("/signup")}
-//             style={{
-//               background: "#5bc4a0",
-//               border: "none",
-//               borderRadius: 8,
-//               color: "#042c53",
-//               padding: "6px 18px",
-//               fontSize: 14,
-//               fontWeight: 700,
-//               cursor: "pointer",
-//             }}
-//           >
-//             Get started
-//           </button>
-//         </div>
-//       </nav>
-
-//       {/* Hero */}
-//       <div className="flex flex-col items-center justify-center flex-1 gap-8 px-6 text-center">
-//         <motion.div
-//           initial={{ scale: 0.85, opacity: 0 }}
-//           animate={{ scale: 1, opacity: 1 }}
-//           transition={{ duration: 0.55 }}
-//         >
-//           <div className="text-7xl mb-5 select-none">🌍</div>
-//           <h1
-//             className="text-white mb-3"
-//             style={{ fontFamily: "'Playfair Display', serif", fontSize: 52, fontWeight: 700, lineHeight: 1.1 }}
-//           >
-//             AtlasPlanner
-//           </h1>
-//           <p className="mb-3" style={{ color: "#5bc4a0", fontSize: 20, fontWeight: 300 }}>
-//             Your AI travel companion
-//           </p>
-//           <p style={{ color: "rgba(255,255,255,0.5)", maxWidth: 400, lineHeight: 1.6 }}>
-//             Answer a few questions and get perfectly matched destinations with a
-//             personalised day-by-day itinerary.
-//           </p>
-//         </motion.div>
-
-//         <motion.button
-//           initial={{ opacity: 0, y: 18 }}
-//           animate={{ opacity: 1, y: 0 }}
-//           transition={{ delay: 0.38 }}
-//           onClick={() => navigate("/quiz")}
-//           style={{
-//             padding: "16px 40px",
-//             background: "#5bc4a0",
-//             color: "#042c53",
-//             fontWeight: 700,
-//             fontSize: 17,
-//             borderRadius: 16,
-//             border: "none",
-//             cursor: "pointer",
-//             boxShadow: "0 8px 32px rgba(91,196,160,0.25)",
-//           }}
-//         >
-//           Start planning →
-//         </motion.button>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default LandingPage;
 import { useEffect, useState } from 'react'
 
 interface LandingPageProps {
   onStart: () => void
   isLoggedIn?: boolean
   onSignIn?: () => void
+}
+
+interface UnsplashPhoto {
+  id: string
+  urls: { regular: string; small: string }
+  alt_description: string | null
+  location?: { name?: string | null }
+  user: { name: string }
 }
 
 const DESTINATIONS = [
@@ -131,19 +28,42 @@ const FEATURES = [
   { icon: '🗺️', title: 'Smart destinations', desc: 'Top 3 countries matched by season, visa & budget' },
   { icon: '📅', title: 'Day-by-day plan', desc: 'Full itinerary with real venues, times & costs' },
   { icon: '🌤️', title: 'Live weather', desc: 'Actual forecast for your travel dates' },
-  { icon: '🎭', title: 'Local events', desc: 'What\'s happening while you\'re there' },
+  { icon: '🎭', title: 'Local events', desc: "What's happening while you're there" },
   { icon: '✏️', title: 'Customizable', desc: 'Tweak the plan until it\'s perfect' },
 ]
+
+const UNSPLASH_KEY = import.meta.env.VITE_UNSPLASH_ACCESS_KEY
 
 export function LandingPage({ onStart, isLoggedIn, onSignIn }: LandingPageProps) {
   const [visible, setVisible] = useState(false)
   const [activeCard, setActiveCard] = useState(0)
+  const [photos, setPhotos] = useState<UnsplashPhoto[]>([])
+  const [photosLoading, setPhotosLoading] = useState(false)
+  const [hoveredPhoto, setHoveredPhoto] = useState<number | null>(null)
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 100)
     const interval = setInterval(() => setActiveCard(p => (p + 1) % DESTINATIONS.length), 2500)
     return () => { clearTimeout(t); clearInterval(interval) }
   }, [])
+
+  useEffect(() => {
+    if (!UNSPLASH_KEY) return
+    setPhotosLoading(true)
+    fetch(
+      `https://api.unsplash.com/photos/random?count=6&query=travel+destination+landscape&orientation=landscape`,
+      { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } }
+    )
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) setPhotos(data)
+      })
+      .catch(() => {})
+      .finally(() => setPhotosLoading(false))
+  }, [])
+
+  const showPhotos = photos.length > 0
+  const showPills = !showPhotos
 
   return (
     <div style={{ minHeight: '100vh', overflow: 'hidden' }}>
@@ -155,27 +75,93 @@ export function LandingPage({ onStart, isLoggedIn, onSignIn }: LandingPageProps)
         padding: '80px 24px 60px', textAlign: 'center', position: 'relative',
       }}>
 
-        {/* Floating destination pills */}
+        {/* Photo strip (Unsplash) or destination pills (fallback) */}
         <div style={{
-          display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center',
           marginBottom: '48px',
           opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(20px)',
           transition: 'all 0.6s ease',
+          width: '100%', maxWidth: 1000,
         }}>
-          {DESTINATIONS.map((d, i) => (
-            <div key={d.name} style={{
-              background: activeCard === i ? 'rgba(91,196,160,0.15)' : 'rgba(255,255,255,0.05)',
-              border: `1px solid ${activeCard === i ? 'rgba(91,196,160,0.4)' : 'rgba(255,255,255,0.08)'}`,
-              borderRadius: '20px', padding: '7px 16px',
-              fontSize: '13px', color: activeCard === i ? '#5bc4a0' : 'rgba(255,255,255,0.5)',
-              display: 'flex', alignItems: 'center', gap: '7px',
-              transition: 'all 0.4s ease', cursor: 'default',
-            }}>
-              <span>{d.emoji}</span>
-              <span style={{ fontWeight: activeCard === i ? 500 : 400 }}>{d.name}</span>
-              <span style={{ opacity: 0.5 }}>· {d.desc}</span>
+          {photosLoading && !showPhotos && (
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', overflowX: 'auto' }}>
+              {[...Array(6)].map((_, i) => (
+                <div key={i} style={{
+                  width: 280, height: 180, borderRadius: 16, flexShrink: 0,
+                  background: 'linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%)',
+                  backgroundSize: '200% 100%',
+                  animation: 'shimmer 1.5s infinite',
+                }} />
+              ))}
             </div>
-          ))}
+          )}
+
+          {showPhotos && (
+            <div style={{
+              display: 'flex', gap: '12px', overflowX: 'auto',
+              paddingBottom: 8, scrollbarWidth: 'none',
+              justifyContent: 'center', flexWrap: 'wrap',
+            }}>
+              {photos.map((photo, i) => {
+                const label = photo.location?.name || photo.alt_description || 'Destination'
+                return (
+                  <div
+                    key={photo.id}
+                    onMouseOver={() => setHoveredPhoto(i)}
+                    onMouseOut={() => setHoveredPhoto(null)}
+                    style={{
+                      width: 280, height: 180, borderRadius: 16, flexShrink: 0,
+                      overflow: 'hidden', position: 'relative', cursor: 'default',
+                      transform: hoveredPhoto === i ? 'scale(1.04)' : 'scale(1)',
+                      transition: 'transform 0.3s ease',
+                    }}
+                  >
+                    <img
+                      src={photo.urls.small}
+                      alt={label}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    {hoveredPhoto === i && (
+                      <div style={{
+                        position: 'absolute', inset: 0,
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)',
+                        display: 'flex', alignItems: 'flex-end', padding: '12px',
+                      }}>
+                        <span style={{
+                          color: '#fff', fontSize: 13, fontWeight: 500,
+                          textShadow: '0 1px 4px rgba(0,0,0,0.5)',
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          maxWidth: '100%',
+                        }}>
+                          {label}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {showPills && !photosLoading && (
+            <div style={{
+              display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center',
+            }}>
+              {DESTINATIONS.map((d, i) => (
+                <div key={d.name} style={{
+                  background: activeCard === i ? 'rgba(91,196,160,0.15)' : 'rgba(255,255,255,0.05)',
+                  border: `1px solid ${activeCard === i ? 'rgba(91,196,160,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                  borderRadius: '20px', padding: '7px 16px',
+                  fontSize: '13px', color: activeCard === i ? '#5bc4a0' : 'rgba(255,255,255,0.5)',
+                  display: 'flex', alignItems: 'center', gap: '7px',
+                  transition: 'all 0.4s ease', cursor: 'default',
+                }}>
+                  <span>{d.emoji}</span>
+                  <span style={{ fontWeight: activeCard === i ? 500 : 400 }}>{d.name}</span>
+                  <span style={{ opacity: 0.5 }}>· {d.desc}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Main headline */}
@@ -340,9 +326,16 @@ export function LandingPage({ onStart, isLoggedIn, onSignIn }: LandingPageProps)
           onMouseOver={e => e.currentTarget.style.opacity = '0.88'}
           onMouseOut={e => e.currentTarget.style.opacity = '1'}
         >
-          {isLoggedIn ? 'Plan a new trip ✈️' : 'Get started — it\'s free'}
+          {isLoggedIn ? 'Plan a new trip ✈️' : "Get started — it's free"}
         </button>
       </section>
+
+      <style>{`
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+      `}</style>
     </div>
   )
-} 
+}

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Globe, Plus, LogOut } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
+import { useQuiz } from "../context/QuizContext";
 import { getUserTrips } from "../services/api";
+import type { TravelPlan } from "../types";
 
 interface Trip {
   id: string;
@@ -12,12 +14,23 @@ interface Trip {
   endDate: string;
   matchScore: number;
   savedAt: string;
+  planJson?: string;
 }
 
 function formatDateRange(start: string, end: string): string {
   const fmt = (d: string) =>
     new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
   return `${fmt(start)} – ${fmt(end)}`;
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 30) return `${days} days ago`;
+  const months = Math.floor(days / 30);
+  return `${months} month${months > 1 ? "s" : ""} ago`;
 }
 
 function scoreColor(score: number): string {
@@ -32,63 +45,54 @@ function countryFlag(country: string): string {
     Portugal: "🇵🇹", Greece: "🇬🇷", Germany: "🇩🇪", Netherlands: "🇳🇱", UK: "🇬🇧",
     USA: "🇺🇸", Mexico: "🇲🇽", Brazil: "🇧🇷", Australia: "🇦🇺", Indonesia: "🇮🇩",
     Vietnam: "🇻🇳", Morocco: "🇲🇦", Turkey: "🇹🇷", Croatia: "🇭🇷", Iceland: "🇮🇸",
+    Egypt: "🇪🇬", India: "🇮🇳", China: "🇨🇳", Argentina: "🇦🇷", Colombia: "🇨🇴",
+    Peru: "🇵🇪", Chile: "🇨🇱", Czech: "🇨🇿", Hungary: "🇭🇺", Poland: "🇵🇱",
+    Sweden: "🇸🇪", Norway: "🇳🇴", Finland: "🇫🇮", Denmark: "🇩🇰", Belgium: "🇧🇪",
+    Switzerland: "🇨🇭", Austria: "🇦🇹", "New Zealand": "🇳🇿", Canada: "🇨🇦",
+    Singapore: "🇸🇬", Malaysia: "🇲🇾", Philippines: "🇵🇭", "South Korea": "🇰🇷",
+    Taiwan: "🇹🇼", "Sri Lanka": "🇱🇰", Nepal: "🇳🇵", Jordan: "🇯🇴",
   };
   return map[country] ?? "🌍";
 }
 
 const DashboardPage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const { setPlan, setSelectedCountry, setTravelDates, setProfile, setScreen } = useQuiz();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     getUserTrips()
-      .then(setTrips)
+      .then(data => setTrips(Array.isArray(data) ? data : []))
       .catch(() => setTrips([]))
       .finally(() => setLoading(false));
   }, []);
 
-  const handleSignOut = () => {
-    logout();
-    navigate("/");
+  const handleViewPlan = (trip: Trip) => {
+    if (!trip.planJson) return;
+    try {
+      const plan = JSON.parse(trip.planJson) as TravelPlan;
+      setPlan(plan);
+      setSelectedCountry({ country: trip.country, city: trip.city, match_score: trip.matchScore });
+      setTravelDates({ start: trip.startDate, end: trip.endDate });
+      setProfile({
+        traveler_type: "Explorer",
+        pace: "moderate",
+        social: "solo",
+        interests: [],
+        avoid: [],
+        budget_style: "moderate",
+        nationality: "Unknown",
+        raw_answers: [],
+      });
+      setScreen("plan");
+      navigate("/quiz");
+    } catch {}
   };
 
   return (
     <div className="min-h-screen" style={{ background: "#042c53", fontFamily: "'DM Sans', sans-serif" }}>
-      {/* Nav */}
-      <nav
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 50,
-          background: "rgba(4,44,83,0.85)",
-          backdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(91,196,160,0.12)",
-          padding: "0 24px",
-          height: 56,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <div className="flex items-center gap-2" style={{ color: "#5bc4a0", fontWeight: 700, fontSize: 18 }}>
-          <Globe size={18} />
-          AtlasPlanner
-        </div>
-        <div className="flex items-center gap-4">
-          <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 14 }}>{user?.name}</span>
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-1.5"
-            style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, background: "none", border: "none", cursor: "pointer" }}
-          >
-            <LogOut size={14} />
-            Sign out
-          </button>
-        </div>
-      </nav>
-
       <div className="max-w-5xl mx-auto px-6 py-10">
         {/* Hero */}
         <div className="mb-10">
@@ -96,7 +100,7 @@ const DashboardPage: React.FC = () => {
             className="text-white mb-2"
             style={{ fontFamily: "'Playfair Display', serif", fontSize: 36, fontWeight: 700 }}
           >
-            Your trips, {user?.name?.split(" ")[0]}
+            Your trips{user?.name ? `, ${user.name.split(" ")[0]}` : ""}
           </h1>
           <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 15 }}>
             All your saved travel plans in one place.
@@ -111,29 +115,20 @@ const DashboardPage: React.FC = () => {
         ) : trips.length === 0 ? (
           <div
             style={{
-              textAlign: "center",
-              paddingTop: 80,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 16,
+              textAlign: "center", paddingTop: 80,
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
             }}
           >
             <span style={{ fontSize: 56 }}>🌐</span>
             <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 16 }}>
-              No trips saved yet.
+              No saved trips yet. Plan your first adventure →
             </p>
             <button
               onClick={() => navigate("/quiz")}
               style={{
-                background: "#5bc4a0",
-                color: "#042c53",
-                border: "none",
-                borderRadius: 10,
-                padding: "12px 28px",
-                fontWeight: 700,
-                fontSize: 15,
-                cursor: "pointer",
+                background: "#5bc4a0", color: "#042c53", border: "none",
+                borderRadius: 10, padding: "12px 28px",
+                fontWeight: 700, fontSize: 15, cursor: "pointer",
               }}
             >
               Plan your first trip →
@@ -154,11 +149,8 @@ const DashboardPage: React.FC = () => {
                   background: "rgba(255,255,255,0.05)",
                   backdropFilter: "blur(10px)",
                   border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 16,
-                  padding: "24px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 12,
+                  borderRadius: 16, padding: "24px",
+                  display: "flex", flexDirection: "column", gap: 12,
                 }}
               >
                 <div className="flex items-center gap-2">
@@ -166,9 +158,7 @@ const DashboardPage: React.FC = () => {
                   <h2
                     style={{
                       fontFamily: "'Playfair Display', serif",
-                      fontSize: 20,
-                      fontWeight: 700,
-                      color: "#fff",
+                      fontSize: 20, fontWeight: 700, color: "#fff",
                     }}
                   >
                     {trip.city}, {trip.country}
@@ -182,35 +172,36 @@ const DashboardPage: React.FC = () => {
                 {trip.matchScore != null && (
                   <span
                     style={{
-                      display: "inline-block",
-                      padding: "4px 12px",
-                      borderRadius: 999,
-                      fontSize: 12,
-                      fontWeight: 700,
+                      display: "inline-block", padding: "4px 12px",
+                      borderRadius: 999, fontSize: 12, fontWeight: 700,
                       background: `${scoreColor(trip.matchScore)}22`,
-                      color: scoreColor(trip.matchScore),
-                      width: "fit-content",
+                      color: scoreColor(trip.matchScore), width: "fit-content",
                     }}
                   >
                     {trip.matchScore}% match
                   </span>
                 )}
 
+                {trip.savedAt && (
+                  <p style={{ color: "rgba(255,255,255,0.25)", fontSize: 12 }}>
+                    Saved {timeAgo(trip.savedAt)}
+                  </p>
+                )}
+
                 <button
-                  onClick={() => navigate("/plan")}
+                  onClick={() => handleViewPlan(trip)}
                   style={{
                     marginTop: "auto",
                     background: "transparent",
                     border: "1.5px solid rgba(91,196,160,0.4)",
-                    borderRadius: 8,
-                    color: "#5bc4a0",
-                    padding: "8px 16px",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: "pointer",
+                    borderRadius: 8, color: "#5bc4a0",
+                    padding: "8px 16px", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    transition: "background 0.2s",
                   }}
+                  onMouseOver={e => (e.currentTarget.style.background = "rgba(91,196,160,0.08)")}
+                  onMouseOut={e => (e.currentTarget.style.background = "transparent")}
                 >
-                  View plan
+                  View plan →
                 </button>
               </div>
             ))}
@@ -223,21 +214,11 @@ const DashboardPage: React.FC = () => {
         onClick={() => navigate("/quiz")}
         title="Plan a new trip"
         style={{
-          position: "fixed",
-          bottom: 32,
-          right: 32,
-          width: 56,
-          height: 56,
-          borderRadius: "50%",
-          background: "#5bc4a0",
-          color: "#042c53",
-          border: "none",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          boxShadow: "0 4px 24px rgba(91,196,160,0.4)",
-          zIndex: 100,
+          position: "fixed", bottom: 32, right: 32,
+          width: 56, height: 56, borderRadius: "50%",
+          background: "#5bc4a0", color: "#042c53", border: "none",
+          cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+          boxShadow: "0 4px 24px rgba(91,196,160,0.4)", zIndex: 100,
         }}
       >
         <Plus size={24} />

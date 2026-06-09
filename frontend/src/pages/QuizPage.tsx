@@ -119,56 +119,118 @@ const QUESTIONS: Question[] = [
 ];
 
 const NATIONALITIES = [
-  { flag: "🇪🇬", label: "Egyptian" },
-  { flag: "🇩🇪", label: "German" },
+  { flag: "🇦🇫", label: "Afghan" },
+  { flag: "🇦🇱", label: "Albanian" },
+  { flag: "🇩🇿", label: "Algerian" },
   { flag: "🇺🇸", label: "American" },
-  { flag: "🇬🇧", label: "British" },
-  { flag: "🇫🇷", label: "French" },
-  { flag: "🇮🇹", label: "Italian" },
-  { flag: "🇪🇸", label: "Spanish" },
-  { flag: "🇹🇷", label: "Turkish" },
-  { flag: "🇮🇳", label: "Indian" },
-  { flag: "🇨🇳", label: "Chinese" },
-  { flag: "🇧🇷", label: "Brazilian" },
-  { flag: "🇷🇺", label: "Russian" },
-  { flag: "🇿🇦", label: "South African" },
-  { flag: "🇲🇦", label: "Moroccan" },
-  { flag: "🇯🇴", label: "Jordanian" },
-  { flag: "🇱🇧", label: "Lebanese" },
-  { flag: "🇸🇦", label: "Saudi Arabian" },
-  { flag: "🇦🇪", label: "Emirati" },
-  { flag: "🇵🇰", label: "Pakistani" },
-  { flag: "🇳🇬", label: "Nigerian" },
-  { flag: "🇮🇩", label: "Indonesian" },
-  { flag: "🇯🇵", label: "Japanese" },
-  { flag: "🇰🇷", label: "Korean" },
-  { flag: "🇦🇺", label: "Australian" },
-  { flag: "🇨🇦", label: "Canadian" },
-  { flag: "🇲🇽", label: "Mexican" },
+  { flag: "🇦🇴", label: "Angolan" },
   { flag: "🇦🇷", label: "Argentine" },
-  { flag: "🇵🇱", label: "Polish" },
+  { flag: "🇦🇲", label: "Armenian" },
+  { flag: "🇦🇺", label: "Australian" },
+  { flag: "🇦🇹", label: "Austrian" },
+  { flag: "🇦🇿", label: "Azerbaijani" },
+  { flag: "🇧🇭", label: "Bahraini" },
+  { flag: "🇧🇩", label: "Bangladeshi" },
+  { flag: "🇧🇪", label: "Belgian" },
+  { flag: "🇧🇴", label: "Bolivian" },
+  { flag: "🇧🇦", label: "Bosnian" },
+  { flag: "🇧🇷", label: "Brazilian" },
+  { flag: "🇬🇧", label: "British" },
+  { flag: "🇧🇬", label: "Bulgarian" },
+  { flag: "🇰🇭", label: "Cambodian" },
+  { flag: "🇨🇲", label: "Cameroonian" },
+  { flag: "🇨🇦", label: "Canadian" },
+  { flag: "🇨🇱", label: "Chilean" },
+  { flag: "🇨🇳", label: "Chinese" },
+  { flag: "🇨🇴", label: "Colombian" },
+  { flag: "🇭🇷", label: "Croatian" },
+  { flag: "🇨🇿", label: "Czech" },
+  { flag: "🇩🇰", label: "Danish" },
   { flag: "🇳🇱", label: "Dutch" },
+  { flag: "🇪🇨", label: "Ecuadorian" },
+  { flag: "🇪🇬", label: "Egyptian" },
+  { flag: "🇦🇪", label: "Emirati" },
+  { flag: "🇪🇪", label: "Estonian" },
+  { flag: "🇪🇹", label: "Ethiopian" },
+  { flag: "🇵🇭", label: "Filipino" },
+  { flag: "🇫🇮", label: "Finnish" },
+  { flag: "🇫🇷", label: "French" },
+  { flag: "🇬🇪", label: "Georgian" },
+  { flag: "🇩🇪", label: "German" },
+  { flag: "🇬🇭", label: "Ghanaian" },
+  { flag: "🇬🇷", label: "Greek" },
+  { flag: "🇬🇹", label: "Guatemalan" },
+  { flag: "🇭🇳", label: "Honduran" },
+  { flag: "🇭🇺", label: "Hungarian" },
+  { flag: "🇮🇳", label: "Indian" },
+  { flag: "🇮🇩", label: "Indonesian" },
+  { flag: "🇮🇷", label: "Iranian" },
+  { flag: "🇮🇶", label: "Iraqi" },
+  { flag: "🇮🇪", label: "Irish" },
+  { flag: "🇮🇱", label: "Israeli" },
+  { flag: "🇮🇹", label: "Italian" },
+  { flag: "🇨🇮", label: "Ivorian" },
+  { flag: "🇯🇲", label: "Jamaican" },
+  { flag: "🇯🇵", label: "Japanese" },
+  { flag: "🇯🇴", label: "Jordanian" },
+  { flag: "🇰🇿", label: "Kazakh" },
+  { flag: "🇰🇪", label: "Kenyan" },
+  { flag: "🇰🇷", label: "Korean" },
+  { flag: "🇰🇼", label: "Kuwaiti" },
+  { flag: "🇰🇬", label: "Kyrgyz" },
+  { flag: "🇱🇻", label: "Latvian" },
+  { flag: "🇱🇧", label: "Lebanese" },
+  { flag: "🇱🇾", label: "Libyan" },
+  { flag: "🇱🇹", label: "Lithuanian" },
+  { flag: "🇱🇺", label: "Luxembourgish" },
+  { flag: "🇲🇾", label: "Malaysian" },
+  { flag: "🇲🇽", label: "Mexican" },
+  { flag: "🇲🇩", label: "Moldovan" },
+  { flag: "🇲🇦", label: "Moroccan" },
+  { flag: "🇲🇿", label: "Mozambican" },
+  { flag: "🇳🇵", label: "Nepalese" },
+  { flag: "🇳🇿", label: "New Zealander" },
+  { flag: "🇳🇬", label: "Nigerian" },
+  { flag: "🇳🇴", label: "Norwegian" },
+  { flag: "🇴🇲", label: "Omani" },
+  { flag: "🇵🇰", label: "Pakistani" },
+  { flag: "🇵🇸", label: "Palestinian" },
+  { flag: "🇵🇦", label: "Panamanian" },
+  { flag: "🇵🇪", label: "Peruvian" },
+  { flag: "🇵🇱", label: "Polish" },
+  { flag: "🇵🇹", label: "Portuguese" },
+  { flag: "🇶🇦", label: "Qatari" },
+  { flag: "🇷🇴", label: "Romanian" },
+  { flag: "🇷🇺", label: "Russian" },
+  { flag: "🇸🇦", label: "Saudi" },
+  { flag: "🇸🇳", label: "Senegalese" },
+  { flag: "🇷🇸", label: "Serbian" },
+  { flag: "🇸🇬", label: "Singaporean" },
+  { flag: "🇸🇰", label: "Slovak" },
+  { flag: "🇸🇮", label: "Slovenian" },
+  { flag: "🇿🇦", label: "South African" },
+  { flag: "🇪🇸", label: "Spanish" },
+  { flag: "🇱🇰", label: "Sri Lankan" },
+  { flag: "🇸🇩", label: "Sudanese" },
   { flag: "🇸🇪", label: "Swedish" },
   { flag: "🇨🇭", label: "Swiss" },
-  { flag: "🇦🇹", label: "Austrian" },
-  { flag: "🇧🇪", label: "Belgian" },
-  { flag: "🇵🇹", label: "Portuguese" },
-  { flag: "🇬🇷", label: "Greek" },
-  { flag: "🇨🇿", label: "Czech" },
-  { flag: "🇭🇺", label: "Hungarian" },
-  { flag: "🇷🇴", label: "Romanian" },
-  { flag: "🇵🇭", label: "Filipino" },
-  { flag: "🇻🇳", label: "Vietnamese" },
+  { flag: "🇸🇾", label: "Syrian" },
+  { flag: "🇹🇼", label: "Taiwanese" },
+  { flag: "🇹🇯", label: "Tajik" },
+  { flag: "🇹🇿", label: "Tanzanian" },
   { flag: "🇹🇭", label: "Thai" },
-  { flag: "🇲🇾", label: "Malaysian" },
-  { flag: "🇸🇬", label: "Singaporean" },
-  { flag: "🇧🇩", label: "Bangladeshi" },
-  { flag: "🇰🇪", label: "Kenyan" },
-  { flag: "🇬🇭", label: "Ghanaian" },
-  { flag: "🇩🇿", label: "Algerian" },
   { flag: "🇹🇳", label: "Tunisian" },
-  { flag: "🇳🇴", label: "Norwegian" },
-];
+  { flag: "🇹🇷", label: "Turkish" },
+  { flag: "🇺🇬", label: "Ugandan" },
+  { flag: "🇺🇦", label: "Ukrainian" },
+  { flag: "🇺🇾", label: "Uruguayan" },
+  { flag: "🇺🇿", label: "Uzbek" },
+  { flag: "🇻🇪", label: "Venezuelan" },
+  { flag: "🇻🇳", label: "Vietnamese" },
+  { flag: "🇾🇪", label: "Yemeni" },
+  { flag: "🇿🇲", label: "Zambian" },
+  { flag: "🇿🇼", label: "Zimbabwean" },
+].sort((a, b) => a.label.localeCompare(b.label));
 
 const TRAVELER_TYPE: Record<string, string> = {
   culture:   "Cultural Explorer",
@@ -181,6 +243,7 @@ export const QuizPage: React.FC = () => {
   const {
     setProfile, setTravelDates, setBudget, setScreen, setRecommendations,
     nationality, setNationality,
+    originCity, setOriginCity,
   } = useQuiz();
 
   // step 0 = nationality, step 1..QUESTIONS.length = questions, step QUESTIONS.length+1 = trip details
@@ -189,6 +252,7 @@ export const QuizPage: React.FC = () => {
   const [travelStart, setTravelStart] = useState("");
   const [travelEnd, setTravelEnd]     = useState("");
   const [budgetVal, setBudgetVal]     = useState(2000);
+  const [originInput, setOriginInput] = useState(originCity);
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState<string | null>(null);
 
@@ -233,6 +297,9 @@ export const QuizPage: React.FC = () => {
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
+
+    // Save originCity to context
+    setOriginCity(originInput);
 
     const quizAnswers: QuizAnswer[] = Object.entries(answers).map(([question_id, answer]) => ({
       question_id,
@@ -297,7 +364,7 @@ export const QuizPage: React.FC = () => {
             exit={{ opacity: 0, x: -28 }}
             transition={{ duration: 0.22 }}
           >
-            <h2 className="text-2xl font-bold text-white mb-2">What's your nationality?</h2>
+            <h2 className="text-2xl font-bold text-white mb-2">Where is your passport from?</h2>
             <p className="text-gray-400 text-sm mb-6">We'll factor in visa requirements and travel advisories for your passport.</p>
 
             <div ref={natRef} className="relative">
@@ -417,6 +484,20 @@ export const QuizPage: React.FC = () => {
                 <span>€500</span>
                 <span>€10,000</span>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-gray-400 text-sm mb-2">
+                What city are you flying from?{" "}
+                <span className="text-gray-600">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={originInput}
+                onChange={(e) => setOriginInput(e.target.value)}
+                placeholder="e.g. Leipzig, Frankfurt, Cairo"
+                className="w-full bg-[#073a6e]/60 border border-[#5bc4a0]/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#5bc4a0] text-sm"
+              />
             </div>
 
             {error && <p className="text-red-400 text-sm">{error}</p>}

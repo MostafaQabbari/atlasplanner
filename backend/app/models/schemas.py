@@ -36,6 +36,8 @@ class RecommendRequest(BaseModel):
     budget_eur: int             # total budget in EUR
     excluded_countries: Optional[list[str]] = []
     nationality: str = "Unknown"
+    origin_city: str = ""
+    preferred_countries: List[str] = []
 
 
 class CountryCard(BaseModel):
@@ -73,11 +75,13 @@ class DayActivity(BaseModel):
     location: str
     type: str                   # "food", "culture", "nature", "event", "hidden_gem"
     estimated_cost_eur: Optional[float] = None
+    google_maps_query: Optional[str] = None
 
 
 class DayPlan(BaseModel):
     date: str
     weather: Optional[str] = None
+    photo_url: Optional[str] = None
     theme: str
     activities: list[DayActivity]
     events: Optional[list[str]] = []

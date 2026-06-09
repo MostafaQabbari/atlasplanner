@@ -10,6 +10,7 @@ import {
   Calendar,
   Euro,
   User,
+  Plane,
 } from "lucide-react";
 import { useQuiz } from "../context/QuizContext";
 import { DayCard } from "../components/plan/DayCard";
@@ -25,6 +26,15 @@ const CUSTOMIZATION_OPTIONS = [
   "Add a day trip outside the city",
 ];
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+interface FlightEstimate {
+  cheapest_eur: number;
+  typical_eur: number;
+  airline: string;
+  duration_hours: number;
+}
+
 export const PlanPage: React.FC = () => {
   const {
     profile,
@@ -34,6 +44,7 @@ export const PlanPage: React.FC = () => {
     plan,
     setPlan,
     setScreen,
+    originCity,
   } = useQuiz();
 
   const [saving, setSaving]               = useState(false);
@@ -45,6 +56,7 @@ export const PlanPage: React.FC = () => {
   const [tipsExpanded, setTipsExpanded]   = useState(false);
   const [localLoading, setLocalLoading]   = useState(false);
   const [localError, setLocalError]       = useState<string | null>(null);
+  const [flightEstimate, setFlightEstimate] = useState<FlightEstimate | null | undefined>(undefined);
 
   // Fallback load if navigated directly (plan not pre-loaded)
   useEffect(() => {
@@ -72,6 +84,23 @@ export const PlanPage: React.FC = () => {
 
     load();
   }, [selectedCountry]);
+
+  // Fetch flight estimate
+  useEffect(() => {
+    if (!originCity || !selectedCountry || !travelDates.start) {
+      setFlightEstimate(null);
+      return;
+    }
+    const params = new URLSearchParams({
+      from: originCity,
+      to: selectedCountry.country,
+      date: travelDates.start,
+    });
+    fetch(`${API_BASE}/api/flights/estimate?${params}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => setFlightEstimate(data))
+      .catch(() => setFlightEstimate(null));
+  }, [originCity, selectedCountry, travelDates.start]);
 
   const handleSave = async () => {
     if (!plan || !selectedCountry || saving || saved) return;
@@ -205,7 +234,7 @@ export const PlanPage: React.FC = () => {
         </div>
 
         {/* TRIP SUMMARY BAR */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-3 gap-3 mb-4">
           <div className="bg-[#073a6e]/60 border border-[#5bc4a0]/20 rounded-xl p-4 text-center">
             <Calendar size={16} className="text-[#5bc4a0] mx-auto mb-1" />
             <p className="text-2xl font-bold text-white leading-tight">{totalDays}</p>
@@ -225,6 +254,30 @@ export const PlanPage: React.FC = () => {
             <p className="text-sm font-bold text-[#5bc4a0] leading-tight line-clamp-2">{profile.traveler_type}</p>
             <p className="text-gray-400 text-xs mt-0.5">Style</p>
           </div>
+        </div>
+
+        {/* FLIGHT ESTIMATE */}
+        <div className="bg-[#073a6e]/60 border border-[#5bc4a0]/20 rounded-xl p-4 mb-6 flex items-center gap-3">
+          <Plane size={16} className="text-[#5bc4a0] flex-shrink-0" />
+          {flightEstimate === undefined ? (
+            <p className="text-gray-500 text-sm">Estimating flight cost…</p>
+          ) : flightEstimate ? (
+            <div>
+              <p className="text-white text-sm font-semibold">
+                ✈️ ~€{Math.round(flightEstimate.cheapest_eur)} – €{Math.round(flightEstimate.typical_eur)}
+              </p>
+              <p className="text-gray-400 text-xs">
+                From {originCity} · {flightEstimate.duration_hours}h · Estimate only
+              </p>
+            </div>
+          ) : (
+            <div>
+              <p className="text-gray-400 text-sm">✈️ Search flights separately</p>
+              {originCity && (
+                <p className="text-gray-600 text-xs">From {originCity}</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* LOCAL TIPS */}
@@ -284,7 +337,7 @@ export const PlanPage: React.FC = () => {
         {plan && (
           <div className="space-y-4">
             {plan.days.map((day, i) => (
-              <DayCard key={i} day={day} dayNumber={i + 1} />
+              <DayCard key={i} day={day} dayNumber={i + 1} city={selectedCountry.city} />
             ))}
           </div>
         )}
@@ -305,7 +358,6 @@ export const PlanPage: React.FC = () => {
       <AnimatePresence>
         {customizeOpen && (
           <>
-            {/* Overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.5 }}
@@ -315,7 +367,6 @@ export const PlanPage: React.FC = () => {
               onClick={() => setCustomizeOpen(false)}
             />
 
-            {/* Panel */}
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -328,7 +379,6 @@ export const PlanPage: React.FC = () => {
                 borderLeft: "1px solid rgba(91,196,160,0.2)",
               }}
             >
-              {/* Panel header */}
               <div
                 className="flex items-center justify-between p-5"
                 style={{ borderBottom: "1px solid rgba(91,196,160,0.15)" }}
@@ -342,7 +392,6 @@ export const PlanPage: React.FC = () => {
                 </button>
               </div>
 
-              {/* Checkboxes */}
               <div className="flex-1 overflow-y-auto p-5 space-y-4">
                 <p className="text-gray-400 text-xs mb-2">
                   Select adjustments, then regenerate your plan.
@@ -372,7 +421,6 @@ export const PlanPage: React.FC = () => {
                 })}
               </div>
 
-              {/* Panel footer */}
               <div
                 className="p-5"
                 style={{ borderTop: "1px solid rgba(91,196,160,0.15)" }}

@@ -1,10 +1,62 @@
+import os
+import asyncio
+import httpx
+from typing import Optional
 from fastapi import APIRouter, HTTPException
 from app.models.schemas import PlanRequest, PlanResponse, DayPlan, DayActivity
-from app.services import claude_service
+from app.services import claude_service, weather_service
 
 router = APIRouter()
 
 VALID_TYPES = {"food", "culture", "nature", "event", "hidden_gem"}
+UNSPLASH_ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY")
+
+
+def _weather_emoji(icon: str) -> str:
+    if icon.startswith("01"):
+        return "☀️"
+    elif icon.startswith(("02", "03", "04")):
+        return "⛅"
+    elif icon.startswith(("09", "10")):
+        return "🌧️"
+    elif icon.startswith("11"):
+        return "⛈️"
+    elif icon.startswith("13"):
+        return "❄️"
+    elif icon.startswith("50"):
+        return "🌫️"
+    return "🌤️"
+
+
+def _match_weather(forecast_list: list, date: str) -> Optional[str]:
+    for day in forecast_list:
+        if day["date"] == date:
+            emoji = _weather_emoji(day.get("icon", ""))
+            temp = round((day["temp_min"] + day["temp_max"]) / 2)
+            desc = day.get("description", "").capitalize()
+            return f"{emoji} {temp}°C · {desc}"
+    return None
+
+
+async def _fetch_unsplash(query: str) -> Optional[str]:
+    if not UNSPLASH_ACCESS_KEY:
+        return None
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                "https://api.unsplash.com/search/photos",
+                params={"query": query, "per_page": 1},
+                headers={"Authorization": f"Client-ID {UNSPLASH_ACCESS_KEY}"},
+                timeout=5.0,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                results = data.get("results", [])
+                if results:
+                    return results[0]["urls"]["regular"]
+    except Exception:
+        pass
+    return None
 
 
 @router.post("/", response_model=PlanResponse)
@@ -21,7 +73,7 @@ async def generate_plan(request: PlanRequest) -> PlanResponse:
         )
         print(f"[plan] Plan data received, days: {len(plan_data.get('days', []))}")
 
-        days = []
+        days: list[DayPlan] = []
         for i, day in enumerate(plan_data.get("days", [])):
             try:
                 activities = []
@@ -41,6 +93,7 @@ async def generate_plan(request: PlanRequest) -> PlanResponse:
                         location=str(a.get("location", "")),
                         type=act_type,
                         estimated_cost_eur=cost,
+                        google_maps_query=a.get("google_maps_query"),
                     ))
                 days.append(DayPlan(
                     date=str(day.get("date", "")),
@@ -52,6 +105,31 @@ async def generate_plan(request: PlanRequest) -> PlanResponse:
             except Exception as day_err:
                 print(f"[plan] Skipping day {i}: {day_err}")
                 continue
+
+        # Enrich days with weather + photos in parallel
+        forecast_list: list = []
+        try:
+            forecast = await weather_service.get_forecast(request.city)
+            forecast_list = forecast.get("forecast", [])
+        except Exception as we:
+            print(f"[plan] Weather fetch failed: {we}")
+
+        async def fetch_photo(day: DayPlan) -> Optional[str]:
+            return await _fetch_unsplash(f"{day.theme} {request.city} travel")
+
+        photo_urls = await asyncio.gather(*[fetch_photo(d) for d in days])
+
+        enriched_days = []
+        for day, photo_url in zip(days, photo_urls):
+            weather_str = day.weather or _match_weather(forecast_list, day.date)
+            enriched_days.append(DayPlan(
+                date=day.date,
+                theme=day.theme,
+                weather=weather_str,
+                photo_url=photo_url,
+                activities=day.activities,
+                events=day.events,
+            ))
 
         total = plan_data.get("total_estimated_cost_eur")
         try:
@@ -65,11 +143,11 @@ async def generate_plan(request: PlanRequest) -> PlanResponse:
         response = PlanResponse(
             country=request.country,
             city=request.city,
-            days=days,
+            days=enriched_days,
             total_estimated_cost_eur=total,
             tips=tips,
         )
-        print(f"[plan] Success: {len(days)} days, {sum(len(d.activities) for d in days)} activities")
+        print(f"[plan] Success: {len(enriched_days)} days, {sum(len(d.activities) for d in enriched_days)} activities")
         return response
 
     except Exception as e:

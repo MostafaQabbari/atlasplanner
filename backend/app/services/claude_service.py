@@ -83,11 +83,21 @@ def build_recommendation_prompt(
     travel_end: str,
     budget_eur: int,
     excluded_countries: list,
+    nationality: str = "Unknown",
+    origin_city: str = "",
+    preferred_countries: list = [],
 ) -> str:
     avoid = ", ".join(profile.avoid) if profile.avoid else "nothing specific"
     excluded = ", ".join(excluded_countries) if excluded_countries else "none"
     interests = ", ".join(profile.interests) if profile.interests else "general travel"
+    preferred = ", ".join(preferred_countries) if preferred_countries else "none"
+    origin = origin_city if origin_city else "unspecified city"
+
     return f"""You are AtlasPlanner's AI travel expert. Recommend exactly 3 countries.
+
+TRAVELER PASSPORT: {nationality}
+FLYING FROM: {origin}
+PREFERRED COUNTRIES (consider but do not force): {preferred}
 
 TRAVELER: {profile.traveler_type}, {profile.pace} pace, traveling {profile.social}
 INTERESTS: {interests}
@@ -95,6 +105,8 @@ AVOIDS: {avoid}
 BUDGET STYLE: {profile.budget_style}
 TRIP: {travel_start} to {travel_end}, total €{budget_eur}
 EXCLUDE: {excluded}
+
+For each recommended country, provide ACCURATE visa information specifically for {nationality} passport holders — visa-free, visa on arrival, e-visa, or embassy visa required. Include approximate cost if visa is required. Factor in geographic proximity from {origin} for travel feasibility.
 
 CRITICAL: Your ENTIRE response must be a JSON array. Start with [ end with ]. Zero other text.
 
@@ -104,7 +116,7 @@ CRITICAL: Your ENTIRE response must be a JSON array. Start with [ end with ]. Ze
     "why_it_fits": "2-3 sentences",
     "weather_summary": "weather during those dates",
     "budget_fit": "perfect",
-    "visa_info": "visa requirements",
+    "visa_info": "precise visa requirements for {nationality} passport holders",
     "currency": "currency and EUR rate",
     "best_cities": ["City1", "City2", "City3"],
     "wildcard_fact": "surprising fact",
@@ -127,7 +139,7 @@ def build_plan_prompt(
     from datetime import datetime
     try:
         d = (datetime.fromisoformat(travel_end) - datetime.fromisoformat(travel_start)).days
-        num_days = min(max(d, 1), 5)
+        num_days = min(max(d, 1), 4)
     except Exception:
         num_days = 3
 
@@ -148,6 +160,10 @@ RULES:
 - Max {per_day} activities per day
 - At least 1 food activity per day
 - Mix hidden gems with classics
+- Use SPECIFIC venue names (not "local market" but the actual market name)
+- Include a local insider tip in each description
+- Explain why a specific time is best for each activity
+- estimated_cost_eur must be a real number (0 if free, never null)
 
 CRITICAL: Your ENTIRE response must be a JSON object. Start with {{ end with }}. Zero other text.
 
@@ -160,10 +176,11 @@ CRITICAL: Your ENTIRE response must be a JSON object. Start with {{ end with }}.
         {{
           "time": "09:00",
           "title": "Activity name",
-          "description": "What to do and why special",
-          "location": "Specific venue or area",
+          "description": "What to do and why special — include insider tip and why this time is best",
+          "location": "Specific venue name and neighborhood",
           "type": "culture",
-          "estimated_cost_eur": 15.0
+          "estimated_cost_eur": 15.0,
+          "google_maps_query": "Venue Name {city} {country}"
         }}
       ]
     }}
@@ -173,6 +190,8 @@ CRITICAL: Your ENTIRE response must be a JSON object. Start with {{ end with }}.
 }}
 
 type must be exactly one of: food, culture, nature, event, hidden_gem
+estimated_cost_eur must be a number (0 if free)
+google_maps_query must be: "venue name city" format for Google Maps search
 Generate exactly {num_days} days. First day date: {travel_start}"""
 
 
@@ -182,9 +201,13 @@ async def get_country_recommendations(
     travel_end: str,
     budget_eur: int,
     excluded_countries: list,
+    nationality: str = "Unknown",
+    origin_city: str = "",
+    preferred_countries: list = [],
 ) -> list:
     prompt = build_recommendation_prompt(
-        profile, travel_start, travel_end, budget_eur, excluded_countries
+        profile, travel_start, travel_end, budget_eur, excluded_countries,
+        nationality=nationality, origin_city=origin_city, preferred_countries=preferred_countries,
     )
     print(f"[claude] Getting recommendations...")
     raw = await call_claude(prompt, max_tokens=1500)
@@ -205,7 +228,7 @@ async def generate_travel_plan(
         profile, country, city, travel_start, travel_end, budget_eur
     )
     print(f"[claude] Generating plan for {city}, {country}...")
-    raw = await call_claude(prompt, max_tokens=4000)
+    raw = await call_claude(prompt, max_tokens=6000)
     print(f"[claude] Got plan response, length: {len(raw)}")
     result = extract_json(raw)
 

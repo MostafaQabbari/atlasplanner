@@ -31,6 +31,8 @@ interface QuizContextType {
   setPlan: (p: TravelPlan | null) => void;
   nationality: string;
   setNationality: (n: string) => void;
+  originCity: string;
+  setOriginCity: (c: string) => void;
   resetAll: () => void;
 }
 
@@ -45,6 +47,7 @@ export const QuizProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [selectedCountry, setSelectedCountry] = useState<SelectedCountry | null>(null);
   const [plan, setPlan]                       = useState<TravelPlan | null>(null);
   const [nationality, setNationality]         = useState<string>("");
+  const [originCity, setOriginCity]           = useState<string>("");
 
   const resetAll = () => {
     setScreen("quiz");
@@ -55,6 +58,7 @@ export const QuizProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSelectedCountry(null);
     setPlan(null);
     setNationality("");
+    setOriginCity("");
   };
 
   return (
@@ -68,6 +72,7 @@ export const QuizProvider: React.FC<{ children: React.ReactNode }> = ({ children
         selectedCountry, setSelectedCountry,
         plan, setPlan,
         nationality, setNationality,
+        originCity, setOriginCity,
         resetAll,
       }}
     >

@@ -1,23 +1,33 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Globe, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext";
 import { QuizProvider, useQuiz } from "./context/QuizContext";
 import { useAuth } from "./hooks/useAuth";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import NavBar from "./components/NavBar";
 
 import { LandingPage } from "./pages/LandingPage";
 import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
 import DashboardPage from "./pages/DashboardPage";
+import ProfilePage from "./pages/ProfilePage";
 import { QuizPage } from "./pages/QuizPage";
 import { RecommendationsPage } from "./pages/RecommendationsPage";
 import { PlanPage } from "./pages/PlanPage";
 
-// --------------- Landing wrapper (provides required props) ---------------
+// ── Layout with global NavBar ───────────────────────────────────────────────
+const MainLayout: React.FC = () => (
+  <>
+    <NavBar />
+    <Outlet />
+  </>
+);
+
+// ── Landing wrapper ─────────────────────────────────────────────────────────
 const LandingWrapper: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -30,7 +40,7 @@ const LandingWrapper: React.FC = () => {
   );
 };
 
-// --------------- Quiz flow shell (wraps the 3-screen quiz) ---------------
+// ── Quiz flow shell (wraps the 3-screen quiz) ───────────────────────────────
 const QuizShellNav: React.FC = () => {
   const { screen, resetAll } = useQuiz();
   const navigate = useNavigate();
@@ -41,8 +51,7 @@ const QuizShellNav: React.FC = () => {
           onClick={() => { resetAll(); navigate("/"); }}
           className="flex items-center gap-2 text-[#5bc4a0] font-bold text-lg"
         >
-          <Globe size={19} />
-          AtlasPlanner
+          🌍 AtlasPlanner
         </button>
         {screen !== "quiz" && (
           <button
@@ -86,56 +95,50 @@ const QuizFlow: React.FC = () => {
   );
 };
 
-const QuizRoute: React.FC = () => (
-  <QuizProvider>
-    <QuizFlow />
-  </QuizProvider>
-);
-
-// --------------- Root ---------------
+// ── Root ────────────────────────────────────────────────────────────────────
 const App: React.FC = () => (
   <BrowserRouter>
     <AuthProvider>
-      <Routes>
-        <Route path="/" element={<LandingWrapper />} />
-        <Route path="/signin" element={<SignInPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
+      <QuizProvider>
+        <Routes>
+          {/* Routes with global NavBar */}
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<LandingWrapper />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
 
-        <Route
-          path="/quiz"
-          element={
-            <ProtectedRoute>
-              <QuizRoute />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/recommendations"
-          element={
-            <ProtectedRoute>
-              <QuizRoute />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/plan"
-          element={
-            <ProtectedRoute>
-              <QuizRoute />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Auth routes (no global NavBar) */}
+          <Route path="/signin" element={<SignInPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          {/* Quiz flow (has its own QuizShellNav) */}
+          <Route
+            path="/quiz"
+            element={
+              <ProtectedRoute>
+                <QuizFlow />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </QuizProvider>
     </AuthProvider>
   </BrowserRouter>
 );
