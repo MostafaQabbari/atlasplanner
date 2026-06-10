@@ -1,10 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuiz } from "../context/QuizContext";
 import { CountryCardComponent } from "../components/recommendations/CountryCardComponent";
 import { ProfileBadge } from "../components/recommendations/ProfileBadge";
 import { PlanLoading } from "../components/plan/PlanLoading";
 import { getRecommendations, generatePlan } from "../services/api";
+
+const PREF_COUNTRIES = [
+  "Australia", "Austria", "Belgium", "Brazil", "Canada", "China", "Czech Republic",
+  "Denmark", "Egypt", "Finland", "France", "Germany", "Greece", "Hungary", "India",
+  "Indonesia", "Ireland", "Israel", "Italy", "Japan", "Jordan", "Kenya", "Lebanon",
+  "Malaysia", "Mexico", "Morocco", "Netherlands", "Nigeria", "Norway", "Pakistan",
+  "Poland", "Portugal", "Romania", "Russia", "Saudi Arabia", "Singapore", "South Africa",
+  "Spain", "Sweden", "Switzerland", "Thailand", "Turkey", "Ukraine",
+  "United Arab Emirates", "United Kingdom", "United States", "Vietnam",
+];
 
 const SLOW_THRESHOLD_MS = 15000;
 const UNSPLASH_KEY = import.meta.env.VITE_UNSPLASH_ACCESS_KEY;
@@ -20,14 +30,34 @@ export const RecommendationsPage: React.FC = () => {
     setSelectedCountry,
     setPlan,
     setScreen,
+    preferredCountries,
+    setPreferredCountries,
   } = useQuiz();
 
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState<string | null>(null);
   const [ready, setReady]           = useState(!!recommendations); // skip form if already loaded
-  const [pref1, setPref1]           = useState("");
-  const [pref2, setPref2]           = useState("");
   const [countryPhotos, setCountryPhotos] = useState<Record<string, string>>({});
+
+  // Preferred country dropdown state
+  const [pref1Input, setPref1Input] = useState(preferredCountries[0] || "");
+  const [pref2Input, setPref2Input] = useState(preferredCountries[1] || "");
+  const [showPref1, setShowPref1]   = useState(false);
+  const [showPref2, setShowPref2]   = useState(false);
+  const pref1Ref = useRef<HTMLDivElement>(null);
+  const pref2Ref = useRef<HTMLDivElement>(null);
+
+  const filteredPref1 = PREF_COUNTRIES.filter(c => c.toLowerCase().includes(pref1Input.toLowerCase()));
+  const filteredPref2 = PREF_COUNTRIES.filter(c => c.toLowerCase().includes(pref2Input.toLowerCase()));
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (pref1Ref.current && !pref1Ref.current.contains(e.target as Node)) setShowPref1(false);
+      if (pref2Ref.current && !pref2Ref.current.contains(e.target as Node)) setShowPref2(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   // Plan loading state
   const [planLoading, setPlanLoading]     = useState(false);
@@ -62,7 +92,8 @@ export const RecommendationsPage: React.FC = () => {
     if (!profile) return;
     setLoading(true);
     setError(null);
-    const preferred = [pref1, pref2].filter(Boolean);
+    const preferred = [pref1Input, pref2Input].filter(Boolean);
+    setPreferredCountries(preferred);
     try {
       const res = await getRecommendations({
         profile,
@@ -167,20 +198,46 @@ export const RecommendationsPage: React.FC = () => {
           <p className="text-white font-semibold mb-1">Do you have any countries in mind?</p>
           <p className="text-gray-400 text-xs mb-4">Optional — Claude will factor these in but still recommend the best fit.</p>
           <div className="flex gap-3 mb-5">
-            <input
-              type="text"
-              value={pref1}
-              onChange={e => setPref1(e.target.value)}
-              placeholder="Country 1 (optional)"
-              className="flex-1 bg-[#042c53]/60 border border-[#5bc4a0]/20 rounded-xl px-3 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-[#5bc4a0] text-sm"
-            />
-            <input
-              type="text"
-              value={pref2}
-              onChange={e => setPref2(e.target.value)}
-              placeholder="Country 2 (optional)"
-              className="flex-1 bg-[#042c53]/60 border border-[#5bc4a0]/20 rounded-xl px-3 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-[#5bc4a0] text-sm"
-            />
+            <div ref={pref1Ref} className="flex-1 relative">
+              <input
+                type="text"
+                value={pref1Input}
+                onChange={e => { setPref1Input(e.target.value); setShowPref1(true); }}
+                onFocus={() => setShowPref1(true)}
+                placeholder="Preferred country 1"
+                className="w-full bg-[#042c53]/60 border border-[#5bc4a0]/20 rounded-xl px-3 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-[#5bc4a0] text-sm"
+              />
+              {showPref1 && filteredPref1.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[#042c53] border border-[#5bc4a0]/20 rounded-xl overflow-hidden z-50 max-h-40 overflow-y-auto shadow-xl">
+                  {filteredPref1.map(c => (
+                    <button key={c} type="button" onClick={() => { setPref1Input(c); setShowPref1(false); }}
+                      className="w-full px-3 py-2 text-left text-sm text-white hover:bg-[#073a6e] transition-colors">
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div ref={pref2Ref} className="flex-1 relative">
+              <input
+                type="text"
+                value={pref2Input}
+                onChange={e => { setPref2Input(e.target.value); setShowPref2(true); }}
+                onFocus={() => setShowPref2(true)}
+                placeholder="Preferred country 2"
+                className="w-full bg-[#042c53]/60 border border-[#5bc4a0]/20 rounded-xl px-3 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-[#5bc4a0] text-sm"
+              />
+              {showPref2 && filteredPref2.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[#042c53] border border-[#5bc4a0]/20 rounded-xl overflow-hidden z-50 max-h-40 overflow-y-auto shadow-xl">
+                  {filteredPref2.map(c => (
+                    <button key={c} type="button" onClick={() => { setPref2Input(c); setShowPref2(false); }}
+                      className="w-full px-3 py-2 text-left text-sm text-white hover:bg-[#073a6e] transition-colors">
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <button
             onClick={() => { setReady(true); fetchRecommendations(); }}

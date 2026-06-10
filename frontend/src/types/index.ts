@@ -40,6 +40,8 @@ export interface DayActivity {
   type: "food" | "culture" | "nature" | "event" | "hidden_gem";
   estimated_cost_eur?: number;
   google_maps_query?: string;
+  opening_hours?: string;
+  opening_warning?: string;
 }
 
 export interface DayPlan {
@@ -49,6 +51,7 @@ export interface DayPlan {
   photo_url?: string;
   activities: DayActivity[];
   events?: string[];
+  typical_weather?: string;
 }
 
 export interface TravelPlan {

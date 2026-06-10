@@ -76,6 +76,8 @@ class DayActivity(BaseModel):
     type: str                   # "food", "culture", "nature", "event", "hidden_gem"
     estimated_cost_eur: Optional[float] = None
     google_maps_query: Optional[str] = None
+    opening_hours: Optional[str] = None
+    opening_warning: Optional[str] = None
 
 
 class DayPlan(BaseModel):
@@ -85,6 +87,7 @@ class DayPlan(BaseModel):
     theme: str
     activities: list[DayActivity]
     events: Optional[list[str]] = []
+    typical_weather: Optional[str] = None
 
 
 class PlanResponse(BaseModel):

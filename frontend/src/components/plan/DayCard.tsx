@@ -23,6 +23,14 @@ const iconMap: Record<string, LucideIcon> = {
   Gem,
 };
 
+const GRADIENTS = [
+  "linear-gradient(135deg, #1a3a5c, #0a6e5c)",
+  "linear-gradient(135deg, #3a1a5c, #6e0a4a)",
+  "linear-gradient(135deg, #1a4a1a, #2a6e2a)",
+  "linear-gradient(135deg, #4a3a1a, #6e5a0a)",
+  "linear-gradient(135deg, #1a2a4a, #0a3a6e)",
+];
+
 interface Props {
   day: DayPlan;
   dayNumber: number;
@@ -32,20 +40,36 @@ interface Props {
 export const DayCard: React.FC<Props> = ({ day, dayNumber, city = "" }) => {
   const [open, setOpen] = useState(dayNumber === 1);
 
+  const gradient = GRADIENTS[(dayNumber - 1) % GRADIENTS.length];
+
   return (
     <div className="bg-[#073a6e]/60 border border-[#5bc4a0]/20 rounded-2xl overflow-hidden">
-      {/* Day photo banner */}
-      {day.photo_url && open && (
-        <div style={{ height: 140, overflow: "hidden", position: "relative" }}>
-          <img
-            src={day.photo_url}
-            alt={day.theme}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-          <div style={{
-            position: "absolute", inset: 0,
-            background: "linear-gradient(to bottom, transparent 30%, rgba(7,58,110,0.85))",
-          }} />
+      {/* Day photo banner — always 140px when open */}
+      {open && (
+        <div style={{ height: 140, overflow: "hidden", position: "relative", borderRadius: "16px 16px 0 0" }}>
+          {day.photo_url ? (
+            <>
+              <img
+                src={day.photo_url}
+                alt={day.theme}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+              <div style={{
+                position: "absolute", inset: 0,
+                background: "linear-gradient(to bottom, transparent 30%, rgba(7,58,110,0.85))",
+              }} />
+            </>
+          ) : (
+            <div style={{
+              width: "100%", height: "100%",
+              background: gradient,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 14, fontWeight: 600, textAlign: "center", padding: "0 16px" }}>
+                {day.theme}
+              </span>
+            </div>
+          )}
         </div>
       )}
 
@@ -107,7 +131,6 @@ export const DayCard: React.FC<Props> = ({ day, dayNumber, city = "" }) => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <h4 className="text-white font-medium text-sm leading-snug">{activity.title}</h4>
-                        {/* Cost badge */}
                         {activity.estimated_cost_eur != null && (
                           activity.estimated_cost_eur === 0 ? (
                             <span style={{
@@ -138,7 +161,26 @@ export const DayCard: React.FC<Props> = ({ day, dayNumber, city = "" }) => {
                       </div>
                       <p className="text-gray-400 text-xs mt-1 leading-relaxed">{activity.description}</p>
 
-                      {/* Maps link */}
+                      {activity.opening_hours && (
+                        <span style={{
+                          fontSize: 11, color: "rgba(255,255,255,0.3)",
+                          display: "flex", alignItems: "center", gap: 4, marginTop: 4,
+                        }}>
+                          🕐 {activity.opening_hours}
+                        </span>
+                      )}
+                      {activity.opening_warning && (
+                        <div style={{
+                          fontSize: 12, color: "#ef9f27",
+                          background: "rgba(239,159,39,0.08)",
+                          border: "1px solid rgba(239,159,39,0.2)",
+                          borderRadius: 6, padding: "5px 10px", marginTop: 6,
+                          display: "flex", alignItems: "center", gap: 6,
+                        }}>
+                          ⚠️ {activity.opening_warning}
+                        </div>
+                      )}
+
                       <a
                         href={mapsUrl}
                         target="_blank"
@@ -163,11 +205,56 @@ export const DayCard: React.FC<Props> = ({ day, dayNumber, city = "" }) => {
               })}
 
               {day.events && day.events.length > 0 && (
-                <div className="pt-3 border-t border-[#5bc4a0]/10">
-                  <p className="text-xs text-[#5bc4a0] font-semibold mb-1.5">Local events nearby</p>
-                  {day.events.map((e, i) => (
-                    <p key={i} className="text-xs text-gray-400">• {e}</p>
-                  ))}
+                <div style={{
+                  background: "rgba(127,119,221,0.07)",
+                  border: "1px solid rgba(127,119,221,0.15)",
+                  borderRadius: 10, padding: 14, marginTop: 10,
+                }}>
+                  <p style={{
+                    fontSize: 11, color: "rgba(175,169,236,0.8)",
+                    letterSpacing: "0.08em", marginBottom: 10, fontWeight: 600,
+                  }}>
+                    🎭 EVENTS HAPPENING DURING YOUR VISIT
+                  </p>
+                  {day.events.map((ev, i) => {
+                    const [label, url] = ev.split("||");
+                    return (
+                      <div key={i} style={{
+                        display: "flex", alignItems: "center",
+                        justifyContent: "space-between", gap: 12,
+                        padding: "8px 0",
+                        borderBottom: i < day.events!.length - 1
+                          ? "1px solid rgba(255,255,255,0.05)" : "none",
+                      }}>
+                        <span style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", flex: 1 }}>
+                          🎟️ {label}
+                        </span>
+                        {url && url.startsWith("http") && (
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              fontSize: 11, color: "#afa9ec", flexShrink: 0,
+                              border: "1px solid rgba(175,169,236,0.3)",
+                              borderRadius: 6, padding: "4px 10px",
+                              textDecoration: "none", transition: "all 0.15s",
+                            }}
+                            onMouseOver={e => {
+                              e.currentTarget.style.background = "rgba(175,169,236,0.15)";
+                              e.currentTarget.style.borderColor = "rgba(175,169,236,0.6)";
+                            }}
+                            onMouseOut={e => {
+                              e.currentTarget.style.background = "transparent";
+                              e.currentTarget.style.borderColor = "rgba(175,169,236,0.3)";
+                            }}
+                          >
+                            Get tickets →
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

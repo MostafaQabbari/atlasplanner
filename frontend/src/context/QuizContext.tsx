@@ -33,6 +33,10 @@ interface QuizContextType {
   setNationality: (n: string) => void;
   originCity: string;
   setOriginCity: (c: string) => void;
+  originCountry: string;
+  setOriginCountry: (c: string) => void;
+  preferredCountries: string[];
+  setPreferredCountries: (c: string[]) => void;
   resetAll: () => void;
 }
 
@@ -46,8 +50,10 @@ export const QuizProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [recommendations, setRecommendations] = useState<CountryCard[] | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<SelectedCountry | null>(null);
   const [plan, setPlan]                       = useState<TravelPlan | null>(null);
-  const [nationality, setNationality]         = useState<string>("");
-  const [originCity, setOriginCity]           = useState<string>("");
+  const [nationality, setNationality]           = useState<string>("");
+  const [originCity, setOriginCity]             = useState<string>("");
+  const [originCountry, setOriginCountry]       = useState<string>("");
+  const [preferredCountries, setPreferredCountries] = useState<string[]>([]);
 
   const resetAll = () => {
     setScreen("quiz");
@@ -59,6 +65,8 @@ export const QuizProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setPlan(null);
     setNationality("");
     setOriginCity("");
+    setOriginCountry("");
+    setPreferredCountries([]);
   };
 
   return (
@@ -73,6 +81,8 @@ export const QuizProvider: React.FC<{ children: React.ReactNode }> = ({ children
         plan, setPlan,
         nationality, setNationality,
         originCity, setOriginCity,
+        originCountry, setOriginCountry,
+        preferredCountries, setPreferredCountries,
         resetAll,
       }}
     >

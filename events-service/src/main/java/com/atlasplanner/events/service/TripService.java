@@ -60,6 +60,7 @@ public class TripService {
                 .endDate(trip.getEndDate())
                 .matchScore(trip.getMatchScore())
                 .savedAt(trip.getSavedAt())
+                .planJson(trip.getPlanJson())
                 .build();
     }
 }

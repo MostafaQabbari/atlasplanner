@@ -45,6 +45,7 @@ export const PlanPage: React.FC = () => {
     setPlan,
     setScreen,
     originCity,
+    originCountry,
   } = useQuiz();
 
   const [saving, setSaving]               = useState(false);
@@ -279,6 +280,64 @@ export const PlanPage: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* BOOKING LINKS */}
+        {(() => {
+          const dest = selectedCountry?.city || "";
+          const bookingLinks = [
+            {
+              label: "✈️ Google Flights",
+              url: `https://www.google.com/travel/flights?q=flights+to+${encodeURIComponent(dest)}`,
+              color: "#4285f4",
+            },
+            {
+              label: "✈️ Skyscanner",
+              url: `https://www.skyscanner.com/transport/flights/${encodeURIComponent(originCountry || "anywhere")}/${encodeURIComponent(dest)}/`,
+              color: "#00b2f5",
+            },
+            {
+              label: "🏨 Booking.com",
+              url: `https://www.booking.com/search.html?ss=${encodeURIComponent(dest)}&checkin=${travelDates.start || ""}&checkout=${travelDates.end || ""}`,
+              color: "#003580",
+            },
+            {
+              label: "🏩 Hostelworld",
+              url: `https://www.hostelworld.com/search#where=${encodeURIComponent(dest)}&fromDate=${travelDates.start || ""}&toDate=${travelDates.end || ""}`,
+              color: "#f26722",
+            },
+          ];
+          return (
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 24 }}>
+              {bookingLinks.map(link => (
+                <a
+                  key={link.label}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: 10, padding: "10px 16px",
+                    fontSize: 13, color: "rgba(255,255,255,0.8)",
+                    textDecoration: "none", transition: "all 0.15s",
+                    fontWeight: 500,
+                  }}
+                  onMouseOver={e => {
+                    e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)";
+                  }}
+                  onMouseOut={e => {
+                    e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                    e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
+                  }}
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          );
+        })()}
 
         {/* LOCAL TIPS */}
         {plan?.tips && plan.tips.length > 0 && (

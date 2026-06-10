@@ -239,11 +239,22 @@ const TRAVELER_TYPE: Record<string, string> = {
   adventure: "Adventure Seeker",
 };
 
+const ORIGIN_COUNTRIES = [
+  "Australia", "Austria", "Belgium", "Brazil", "Canada", "China", "Czech Republic",
+  "Denmark", "Egypt", "Finland", "France", "Germany", "Greece", "Hungary", "India",
+  "Indonesia", "Ireland", "Israel", "Italy", "Japan", "Jordan", "Kenya", "Lebanon",
+  "Malaysia", "Mexico", "Morocco", "Netherlands", "Nigeria", "Norway", "Pakistan",
+  "Poland", "Portugal", "Romania", "Russia", "Saudi Arabia", "Singapore", "South Africa",
+  "Spain", "Sweden", "Switzerland", "Thailand", "Turkey", "Ukraine",
+  "United Arab Emirates", "United Kingdom", "United States", "Vietnam",
+];
+
 export const QuizPage: React.FC = () => {
   const {
     setProfile, setTravelDates, setBudget, setScreen, setRecommendations,
     nationality, setNationality,
     originCity, setOriginCity,
+    originCountry, setOriginCountry,
   } = useQuiz();
 
   // step 0 = nationality, step 1..QUESTIONS.length = questions, step QUESTIONS.length+1 = trip details
@@ -255,6 +266,24 @@ export const QuizPage: React.FC = () => {
   const [originInput, setOriginInput] = useState(originCity);
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState<string | null>(null);
+
+  // Origin country dropdown state
+  const [originCountryInput, setOriginCountryInput] = useState(originCountry);
+  const [showOriginDropdown, setShowOriginDropdown] = useState(false);
+  const originRef = useRef<HTMLDivElement>(null);
+  const filteredOriginCountries = ORIGIN_COUNTRIES.filter(c =>
+    c.toLowerCase().includes(originCountryInput.toLowerCase())
+  );
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (originRef.current && !originRef.current.contains(e.target as Node)) {
+        setShowOriginDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   // Nationality step state
   const [natInput, setNatInput]       = useState(nationality);
@@ -298,8 +327,9 @@ export const QuizPage: React.FC = () => {
     setLoading(true);
     setError(null);
 
-    // Save originCity to context
+    // Save origin to context
     setOriginCity(originInput);
+    setOriginCountry(originCountryInput);
 
     const quizAnswers: QuizAnswer[] = Object.entries(answers).map(([question_id, answer]) => ({
       question_id,
@@ -486,18 +516,39 @@ export const QuizPage: React.FC = () => {
               </div>
             </div>
 
-            <div>
+            <div ref={originRef}>
               <label className="block text-gray-400 text-sm mb-2">
-                What city are you flying from?{" "}
+                Where are you flying from?{" "}
                 <span className="text-gray-600">(optional)</span>
               </label>
-              <input
-                type="text"
-                value={originInput}
-                onChange={(e) => setOriginInput(e.target.value)}
-                placeholder="e.g. Leipzig, Frankfurt, Cairo"
-                className="w-full bg-[#073a6e]/60 border border-[#5bc4a0]/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#5bc4a0] text-sm"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={originCountryInput}
+                  onChange={(e) => { setOriginCountryInput(e.target.value); setShowOriginDropdown(true); }}
+                  onFocus={() => setShowOriginDropdown(true)}
+                  placeholder="Search country…"
+                  className="w-full bg-[#073a6e]/60 border border-[#5bc4a0]/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#5bc4a0] text-sm"
+                />
+                {showOriginDropdown && filteredOriginCountries.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-[#042c53] border border-[#5bc4a0]/20 rounded-xl overflow-hidden z-50 max-h-48 overflow-y-auto shadow-xl">
+                    {filteredOriginCountries.map(country => (
+                      <button
+                        key={country}
+                        type="button"
+                        onClick={() => {
+                          setOriginCountryInput(country);
+                          setOriginInput(country);
+                          setShowOriginDropdown(false);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-sm text-white hover:bg-[#073a6e] transition-colors"
+                      >
+                        {country}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {error && <p className="text-red-400 text-sm">{error}</p>}

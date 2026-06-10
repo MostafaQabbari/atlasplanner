@@ -143,6 +143,11 @@ def build_plan_prompt(
     except Exception:
         num_days = 3
 
+    try:
+        month_name = datetime.fromisoformat(travel_start).strftime('%B')
+    except Exception:
+        month_name = 'summer'
+
     per_day = 2 if profile.pace in ("slow", "moderate") else 4
     avoid = ", ".join(profile.avoid) if profile.avoid else "nothing"
     interests = ", ".join(profile.interests) if profile.interests else "general"
@@ -164,6 +169,9 @@ RULES:
 - Include a local insider tip in each description
 - Explain why a specific time is best for each activity
 - estimated_cost_eur must be a real number (0 if free, never null)
+- typical_weather: brief seasonal weather for {city} in {month_name}, e.g. "Warm and sunny, 26°C typical"
+- opening_hours: real opening hours for each venue, e.g. "Tue–Sun 09:00–17:00". Write "Check locally" if unknown.
+- opening_warning: if the scheduled visit time conflicts with opening hours, write a warning. If venue is closed that day write "Closed on [day] — reschedule". If time is before opening write "Opens at HH:MM — arrive after opening". Write null if no conflict.
 
 CRITICAL: Your ENTIRE response must be a JSON object. Start with {{ end with }}. Zero other text.
 
@@ -172,6 +180,7 @@ CRITICAL: Your ENTIRE response must be a JSON object. Start with {{ end with }}.
     {{
       "date": "2025-08-01",
       "theme": "Creative day title",
+      "typical_weather": "Warm and sunny, 26°C typical for {month_name}",
       "activities": [
         {{
           "time": "09:00",
@@ -180,7 +189,9 @@ CRITICAL: Your ENTIRE response must be a JSON object. Start with {{ end with }}.
           "location": "Specific venue name and neighborhood",
           "type": "culture",
           "estimated_cost_eur": 15.0,
-          "google_maps_query": "Venue Name {city} {country}"
+          "google_maps_query": "Venue Name {city} {country}",
+          "opening_hours": "Tue–Sun 09:00–17:00",
+          "opening_warning": null
         }}
       ]
     }}

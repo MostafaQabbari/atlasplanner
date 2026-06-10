@@ -20,4 +20,5 @@ public class TripResponse {
     private String endDate;
     private Integer matchScore;
     private LocalDateTime savedAt;
+    private String planJson;
 }

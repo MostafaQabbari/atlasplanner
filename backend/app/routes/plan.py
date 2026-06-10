@@ -11,6 +11,20 @@ router = APIRouter()
 VALID_TYPES = {"food", "culture", "nature", "event", "hidden_gem"}
 UNSPLASH_ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY")
 
+COUNTRY_CODES = {
+    'Japan': 'JP', 'Morocco': 'MA', 'Portugal': 'PT', 'Italy': 'IT', 'Spain': 'ES',
+    'Greece': 'GR', 'Croatia': 'HR', 'Turkey': 'TR', 'France': 'FR', 'Germany': 'DE',
+    'Jordan': 'JO', 'Egypt': 'EG', 'Thailand': 'TH', 'Vietnam': 'VN', 'Indonesia': 'ID',
+    'Georgia': 'GE', 'Iceland': 'IS', 'Mexico': 'MX', 'Colombia': 'CO', 'Peru': 'PE',
+    'Argentina': 'AR', 'India': 'IN', 'Kenya': 'KE', 'Netherlands': 'NL', 'Austria': 'AT',
+    'Switzerland': 'CH', 'Hungary': 'HU', 'Czech Republic': 'CZ', 'Poland': 'PL',
+    'United Kingdom': 'GB', 'United States': 'US', 'Australia': 'AU', 'Canada': 'CA',
+    'Brazil': 'BR', 'South Africa': 'ZA', 'Nigeria': 'NG', 'Saudi Arabia': 'SA',
+    'United Arab Emirates': 'AE', 'Singapore': 'SG', 'Malaysia': 'MY', 'South Korea': 'KR',
+    'Belgium': 'BE', 'Denmark': 'DK', 'Finland': 'FI', 'Ireland': 'IE', 'Israel': 'IL',
+    'Norway': 'NO', 'Romania': 'RO', 'Sweden': 'SE', 'Ukraine': 'UA',
+}
+
 
 def _weather_emoji(icon: str) -> str:
     if icon.startswith("01"):
@@ -94,6 +108,8 @@ async def generate_plan(request: PlanRequest) -> PlanResponse:
                         type=act_type,
                         estimated_cost_eur=cost,
                         google_maps_query=a.get("google_maps_query"),
+                        opening_hours=a.get("opening_hours"),
+                        opening_warning=a.get("opening_warning"),
                     ))
                 days.append(DayPlan(
                     date=str(day.get("date", "")),
@@ -101,6 +117,7 @@ async def generate_plan(request: PlanRequest) -> PlanResponse:
                     weather=day.get("weather"),
                     activities=activities,
                     events=day.get("events") or [],
+                    typical_weather=day.get("typical_weather"),
                 ))
             except Exception as day_err:
                 print(f"[plan] Skipping day {i}: {day_err}")
@@ -129,7 +146,43 @@ async def generate_plan(request: PlanRequest) -> PlanResponse:
                 photo_url=photo_url,
                 activities=day.activities,
                 events=day.events,
+                typical_weather=day.typical_weather,
             ))
+
+        # Apply typical_weather fallback for days beyond forecast window
+        for day in enriched_days:
+            if not day.weather and day.typical_weather:
+                day.weather = f"🌤️ {day.typical_weather} (seasonal)"
+
+        # Enrich days with events from Java service
+        try:
+            events_url = os.getenv('EVENTS_SERVICE_URL', 'http://localhost:8080')
+            code = COUNTRY_CODES.get(request.country, request.country[:2].upper())
+            async with httpx.AsyncClient(timeout=8.0) as client:
+                resp = await client.get(
+                    f"{events_url}/api/events/{code}",
+                    params={"startDate": request.travel_start, "endDate": request.travel_end}
+                )
+                if resp.status_code == 200:
+                    all_events = resp.json()
+                    events_by_date: dict = {}
+                    for ev in all_events:
+                        date = ev.get('date', '')
+                        if not date:
+                            continue
+                        if date not in events_by_date:
+                            events_by_date[date] = []
+                        name = ev.get('name', '')
+                        venue = ev.get('venue', '')
+                        city_name = ev.get('city', '')
+                        url = ev.get('ticketUrl', '')
+                        label = f"{name} @ {venue}{', ' + city_name if city_name else ''}"
+                        events_by_date[date].append(f"{label}||{url}")
+                    for day in enriched_days:
+                        if day.date in events_by_date:
+                            day.events = events_by_date[day.date][:3]
+        except Exception as ev_err:
+            print(f"[plan] Events fetch skipped: {ev_err}")
 
         total = plan_data.get("total_estimated_cost_eur")
         try:
