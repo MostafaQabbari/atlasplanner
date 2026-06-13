@@ -12,17 +12,53 @@ VALID_TYPES = {"food", "culture", "nature", "event", "hidden_gem"}
 UNSPLASH_ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY")
 
 COUNTRY_CODES = {
-    'Japan': 'JP', 'Morocco': 'MA', 'Portugal': 'PT', 'Italy': 'IT', 'Spain': 'ES',
-    'Greece': 'GR', 'Croatia': 'HR', 'Turkey': 'TR', 'France': 'FR', 'Germany': 'DE',
-    'Jordan': 'JO', 'Egypt': 'EG', 'Thailand': 'TH', 'Vietnam': 'VN', 'Indonesia': 'ID',
-    'Georgia': 'GE', 'Iceland': 'IS', 'Mexico': 'MX', 'Colombia': 'CO', 'Peru': 'PE',
-    'Argentina': 'AR', 'India': 'IN', 'Kenya': 'KE', 'Netherlands': 'NL', 'Austria': 'AT',
-    'Switzerland': 'CH', 'Hungary': 'HU', 'Czech Republic': 'CZ', 'Poland': 'PL',
-    'United Kingdom': 'GB', 'United States': 'US', 'Australia': 'AU', 'Canada': 'CA',
-    'Brazil': 'BR', 'South Africa': 'ZA', 'Nigeria': 'NG', 'Saudi Arabia': 'SA',
-    'United Arab Emirates': 'AE', 'Singapore': 'SG', 'Malaysia': 'MY', 'South Korea': 'KR',
-    'Belgium': 'BE', 'Denmark': 'DK', 'Finland': 'FI', 'Ireland': 'IE', 'Israel': 'IL',
-    'Norway': 'NO', 'Romania': 'RO', 'Sweden': 'SE', 'Ukraine': 'UA',
+    'Andorra':'AD','United Arab Emirates':'AE','Afghanistan':'AF',
+    'Antigua and Barbuda':'AG','Albania':'AL','Armenia':'AM',
+    'Angola':'AO','Argentina':'AR','Austria':'AT','Australia':'AU',
+    'Azerbaijan':'AZ','Bosnia and Herzegovina':'BA','Barbados':'BB',
+    'Bangladesh':'BD','Belgium':'BE','Burkina Faso':'BF','Bulgaria':'BG',
+    'Bahrain':'BH','Benin':'BJ','Brunei':'BN','Bolivia':'BO',
+    'Brazil':'BR','Bahamas':'BS','Bhutan':'BT','Botswana':'BW',
+    'Belarus':'BY','Belize':'BZ','Canada':'CA','Congo':'CD',
+    'Central African Republic':'CF','Switzerland':'CH','Ivory Coast':'CI',
+    'Chile':'CL','Cameroon':'CM','China':'CN','Colombia':'CO',
+    'Costa Rica':'CR','Cuba':'CU','Cabo Verde':'CV','Cyprus':'CY',
+    'Czech Republic':'CZ','Germany':'DE','Djibouti':'DJ','Denmark':'DK',
+    'Dominican Republic':'DO','Algeria':'DZ','Ecuador':'EC','Estonia':'EE',
+    'Egypt':'EG','Eritrea':'ER','Spain':'ES','Ethiopia':'ET',
+    'Finland':'FI','Fiji':'FJ','France':'FR','Gabon':'GA',
+    'United Kingdom':'GB','Georgia':'GE','Ghana':'GH','Gambia':'GM',
+    'Guinea':'GN','Equatorial Guinea':'GQ','Greece':'GR',
+    'Guatemala':'GT','Guinea-Bissau':'GW','Guyana':'GY','Honduras':'HN',
+    'Croatia':'HR','Haiti':'HT','Hungary':'HU','Indonesia':'ID',
+    'Ireland':'IE','Israel':'IL','India':'IN','Iraq':'IQ','Iran':'IR',
+    'Iceland':'IS','Italy':'IT','Jamaica':'JM','Jordan':'JO',
+    'Japan':'JP','Kenya':'KE','Kyrgyzstan':'KG','Cambodia':'KH',
+    'Comoros':'KM','South Korea':'KR','Kuwait':'KW','Kazakhstan':'KZ',
+    'Laos':'LA','Lebanon':'LB','Liechtenstein':'LI','Sri Lanka':'LK',
+    'Liberia':'LR','Lesotho':'LS','Lithuania':'LT','Luxembourg':'LU',
+    'Latvia':'LV','Libya':'LY','Morocco':'MA','Moldova':'MD',
+    'Madagascar':'MG','North Macedonia':'MK','Mali':'ML','Myanmar':'MM',
+    'Mongolia':'MN','Mauritania':'MR','Malta':'MT','Mauritius':'MU',
+    'Maldives':'MV','Malawi':'MW','Mexico':'MX','Malaysia':'MY',
+    'Mozambique':'MZ','Namibia':'NA','Niger':'NE','Nigeria':'NG',
+    'Nicaragua':'NI','Netherlands':'NL','Norway':'NO','Nepal':'NP',
+    'New Zealand':'NZ','Oman':'OM','Panama':'PA','Peru':'PE',
+    'Papua New Guinea':'PG','Philippines':'PH','Pakistan':'PK',
+    'Poland':'PL','Palestine':'PS','Portugal':'PT','Paraguay':'PY',
+    'Qatar':'QA','Romania':'RO','Serbia':'RS','Russia':'RU',
+    'Rwanda':'RW','Saudi Arabia':'SA','Solomon Islands':'SB',
+    'Sudan':'SD','Sweden':'SE','Singapore':'SG','Slovenia':'SI',
+    'Slovakia':'SK','Sierra Leone':'SL','Senegal':'SN','Somalia':'SO',
+    'Suriname':'SR','South Sudan':'SS','Sao Tome and Principe':'ST',
+    'El Salvador':'SV','Syria':'SY','Eswatini':'SZ','Chad':'TD',
+    'Togo':'TG','Thailand':'TH','Tajikistan':'TJ','Timor-Leste':'TL',
+    'Turkmenistan':'TM','Tunisia':'TN','Turkey':'TR',
+    'Trinidad and Tobago':'TT','Taiwan':'TW','Tanzania':'TZ',
+    'Ukraine':'UA','Uganda':'UG','United States':'US','Uruguay':'UY',
+    'Uzbekistan':'UZ','Venezuela':'VE','Vietnam':'VN','Vanuatu':'VU',
+    'Samoa':'WS','Yemen':'YE','South Africa':'ZA','Zambia':'ZM',
+    'Zimbabwe':'ZW',
 }
 
 
@@ -156,12 +192,15 @@ async def generate_plan(request: PlanRequest) -> PlanResponse:
 
         # Enrich days with events from Java service
         try:
-            events_url = os.getenv('EVENTS_SERVICE_URL', 'http://localhost:8080')
+            events_base = os.getenv('EVENTS_SERVICE_URL', 'http://localhost:8080')
             code = COUNTRY_CODES.get(request.country, request.country[:2].upper())
             async with httpx.AsyncClient(timeout=8.0) as client:
                 resp = await client.get(
-                    f"{events_url}/api/events/{code}",
-                    params={"startDate": request.travel_start, "endDate": request.travel_end}
+                    f"{events_base}/api/events/{code}",
+                    params={
+                        "startDate": request.travel_start,
+                        "endDate": request.travel_end
+                    }
                 )
                 if resp.status_code == 200:
                     all_events = resp.json()
@@ -174,13 +213,18 @@ async def generate_plan(request: PlanRequest) -> PlanResponse:
                             events_by_date[date] = []
                         name = ev.get('name', '')
                         venue = ev.get('venue', '')
-                        city_name = ev.get('city', '')
+                        city_ev = ev.get('city', '')
                         url = ev.get('ticketUrl', '')
-                        label = f"{name} @ {venue}{', ' + city_name if city_name else ''}"
+                        location_part = f" @ {venue}" if venue else ''
+                        city_part = f", {city_ev}" if city_ev else ''
+                        label = f"{name}{location_part}{city_part}"
                         events_by_date[date].append(f"{label}||{url}")
                     for day in enriched_days:
                         if day.date in events_by_date:
                             day.events = events_by_date[day.date][:3]
+                    print(f"[plan] Events fetched: {sum(len(v) for v in events_by_date.values())} total")
+                else:
+                    print(f"[plan] Events returned {resp.status_code}")
         except Exception as ev_err:
             print(f"[plan] Events fetch skipped: {ev_err}")
 

@@ -6,14 +6,36 @@ import { ProfileBadge } from "../components/recommendations/ProfileBadge";
 import { PlanLoading } from "../components/plan/PlanLoading";
 import { getRecommendations, generatePlan } from "../services/api";
 
-const PREF_COUNTRIES = [
-  "Australia", "Austria", "Belgium", "Brazil", "Canada", "China", "Czech Republic",
-  "Denmark", "Egypt", "Finland", "France", "Germany", "Greece", "Hungary", "India",
-  "Indonesia", "Ireland", "Israel", "Italy", "Japan", "Jordan", "Kenya", "Lebanon",
-  "Malaysia", "Mexico", "Morocco", "Netherlands", "Nigeria", "Norway", "Pakistan",
-  "Poland", "Portugal", "Romania", "Russia", "Saudi Arabia", "Singapore", "South Africa",
-  "Spain", "Sweden", "Switzerland", "Thailand", "Turkey", "Ukraine",
-  "United Arab Emirates", "United Kingdom", "United States", "Vietnam",
+const ALL_COUNTRIES = [
+  "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda",
+  "Argentina","Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain",
+  "Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia",
+  "Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso",
+  "Burundi","Cabo Verde","Cambodia","Cameroon","Canada","Central African Republic",
+  "Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica","Croatia","Cuba",
+  "Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic",
+  "Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini",
+  "Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana",
+  "Greece","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Honduras",
+  "Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy",
+  "Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait","Kyrgyzstan",
+  "Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania",
+  "Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta",
+  "Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova",
+  "Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia",
+  "Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria",
+  "North Korea","North Macedonia","Norway","Oman","Pakistan","Palau","Palestine",
+  "Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal",
+  "Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia",
+  "Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe",
+  "Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore",
+  "Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","South Korea",
+  "South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland",
+  "Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga",
+  "Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda",
+  "Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay",
+  "Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia",
+  "Zimbabwe",
 ];
 
 const SLOW_THRESHOLD_MS = 15000;
@@ -47,8 +69,8 @@ export const RecommendationsPage: React.FC = () => {
   const pref1Ref = useRef<HTMLDivElement>(null);
   const pref2Ref = useRef<HTMLDivElement>(null);
 
-  const filteredPref1 = PREF_COUNTRIES.filter(c => c.toLowerCase().includes(pref1Input.toLowerCase()));
-  const filteredPref2 = PREF_COUNTRIES.filter(c => c.toLowerCase().includes(pref2Input.toLowerCase()));
+  const filteredPref1 = ALL_COUNTRIES.filter(c => c.toLowerCase().includes(pref1Input.toLowerCase()));
+  const filteredPref2 = ALL_COUNTRIES.filter(c => c.toLowerCase().includes(pref2Input.toLowerCase()));
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -199,16 +221,22 @@ export const RecommendationsPage: React.FC = () => {
           <p className="text-gray-400 text-xs mb-4">Optional — Claude will factor these in but still recommend the best fit.</p>
           <div className="flex gap-3 mb-5">
             <div ref={pref1Ref} className="flex-1 relative">
-              <input
-                type="text"
-                value={pref1Input}
-                onChange={e => { setPref1Input(e.target.value); setShowPref1(true); }}
-                onFocus={() => setShowPref1(true)}
-                placeholder="Preferred country 1"
-                className="w-full bg-[#042c53]/60 border border-[#5bc4a0]/20 rounded-xl px-3 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-[#5bc4a0] text-sm"
-              />
-              {showPref1 && filteredPref1.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-[#042c53] border border-[#5bc4a0]/20 rounded-xl overflow-hidden z-50 max-h-40 overflow-y-auto shadow-xl">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={pref1Input}
+                  onChange={e => { setPref1Input(e.target.value); setShowPref1(e.target.value.length > 0); }}
+                  onBlur={() => setTimeout(() => setShowPref1(false), 150)}
+                  placeholder="Preferred country 1"
+                  className="w-full bg-[#042c53]/60 border border-[#5bc4a0]/20 rounded-xl px-3 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-[#5bc4a0] text-sm pr-7"
+                />
+                {pref1Input && (
+                  <button type="button" onClick={() => { setPref1Input(""); setShowPref1(false); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-xs">✕</button>
+                )}
+              </div>
+              {showPref1 && pref1Input.length > 0 && filteredPref1.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[#042c53] border border-[#5bc4a0]/20 rounded-xl overflow-hidden z-50 max-h-[320px] overflow-y-auto shadow-xl">
                   {filteredPref1.map(c => (
                     <button key={c} type="button" onClick={() => { setPref1Input(c); setShowPref1(false); }}
                       className="w-full px-3 py-2 text-left text-sm text-white hover:bg-[#073a6e] transition-colors">
@@ -219,16 +247,22 @@ export const RecommendationsPage: React.FC = () => {
               )}
             </div>
             <div ref={pref2Ref} className="flex-1 relative">
-              <input
-                type="text"
-                value={pref2Input}
-                onChange={e => { setPref2Input(e.target.value); setShowPref2(true); }}
-                onFocus={() => setShowPref2(true)}
-                placeholder="Preferred country 2"
-                className="w-full bg-[#042c53]/60 border border-[#5bc4a0]/20 rounded-xl px-3 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-[#5bc4a0] text-sm"
-              />
-              {showPref2 && filteredPref2.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-[#042c53] border border-[#5bc4a0]/20 rounded-xl overflow-hidden z-50 max-h-40 overflow-y-auto shadow-xl">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={pref2Input}
+                  onChange={e => { setPref2Input(e.target.value); setShowPref2(e.target.value.length > 0); }}
+                  onBlur={() => setTimeout(() => setShowPref2(false), 150)}
+                  placeholder="Preferred country 2"
+                  className="w-full bg-[#042c53]/60 border border-[#5bc4a0]/20 rounded-xl px-3 py-2.5 text-white placeholder-gray-600 focus:outline-none focus:border-[#5bc4a0] text-sm pr-7"
+                />
+                {pref2Input && (
+                  <button type="button" onClick={() => { setPref2Input(""); setShowPref2(false); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-xs">✕</button>
+                )}
+              </div>
+              {showPref2 && pref2Input.length > 0 && filteredPref2.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[#042c53] border border-[#5bc4a0]/20 rounded-xl overflow-hidden z-50 max-h-[320px] overflow-y-auto shadow-xl">
                   {filteredPref2.map(c => (
                     <button key={c} type="button" onClick={() => { setPref2Input(c); setShowPref2(false); }}
                       className="w-full px-3 py-2 text-left text-sm text-white hover:bg-[#073a6e] transition-colors">

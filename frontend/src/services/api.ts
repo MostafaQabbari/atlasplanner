@@ -11,7 +11,7 @@ const TOKEN_KEY = "atlas_token";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
-  timeout: 60000,
+  timeout: 90000,
 });
 
 api.interceptors.request.use((config) => {
@@ -57,7 +57,7 @@ export const generatePlan = async (payload: {
   budget_eur: number;
   customizations?: string[];
 }): Promise<TravelPlan> => {
-  const { data } = await api.post("/api/plan/", payload, { timeout: 90000 });
+  const { data } = await api.post("/api/plan/", payload, { timeout: 120000 });
   return data;
 };
 

@@ -119,118 +119,35 @@ const QUESTIONS: Question[] = [
 ];
 
 const NATIONALITIES = [
-  { flag: "🇦🇫", label: "Afghan" },
-  { flag: "🇦🇱", label: "Albanian" },
-  { flag: "🇩🇿", label: "Algerian" },
-  { flag: "🇺🇸", label: "American" },
-  { flag: "🇦🇴", label: "Angolan" },
-  { flag: "🇦🇷", label: "Argentine" },
-  { flag: "🇦🇲", label: "Armenian" },
-  { flag: "🇦🇺", label: "Australian" },
-  { flag: "🇦🇹", label: "Austrian" },
-  { flag: "🇦🇿", label: "Azerbaijani" },
-  { flag: "🇧🇭", label: "Bahraini" },
-  { flag: "🇧🇩", label: "Bangladeshi" },
-  { flag: "🇧🇪", label: "Belgian" },
-  { flag: "🇧🇴", label: "Bolivian" },
-  { flag: "🇧🇦", label: "Bosnian" },
-  { flag: "🇧🇷", label: "Brazilian" },
-  { flag: "🇬🇧", label: "British" },
-  { flag: "🇧🇬", label: "Bulgarian" },
-  { flag: "🇰🇭", label: "Cambodian" },
-  { flag: "🇨🇲", label: "Cameroonian" },
-  { flag: "🇨🇦", label: "Canadian" },
-  { flag: "🇨🇱", label: "Chilean" },
-  { flag: "🇨🇳", label: "Chinese" },
-  { flag: "🇨🇴", label: "Colombian" },
-  { flag: "🇭🇷", label: "Croatian" },
-  { flag: "🇨🇿", label: "Czech" },
-  { flag: "🇩🇰", label: "Danish" },
-  { flag: "🇳🇱", label: "Dutch" },
-  { flag: "🇪🇨", label: "Ecuadorian" },
-  { flag: "🇪🇬", label: "Egyptian" },
-  { flag: "🇦🇪", label: "Emirati" },
-  { flag: "🇪🇪", label: "Estonian" },
-  { flag: "🇪🇹", label: "Ethiopian" },
-  { flag: "🇵🇭", label: "Filipino" },
-  { flag: "🇫🇮", label: "Finnish" },
-  { flag: "🇫🇷", label: "French" },
-  { flag: "🇬🇪", label: "Georgian" },
-  { flag: "🇩🇪", label: "German" },
-  { flag: "🇬🇭", label: "Ghanaian" },
-  { flag: "🇬🇷", label: "Greek" },
-  { flag: "🇬🇹", label: "Guatemalan" },
-  { flag: "🇭🇳", label: "Honduran" },
-  { flag: "🇭🇺", label: "Hungarian" },
-  { flag: "🇮🇳", label: "Indian" },
-  { flag: "🇮🇩", label: "Indonesian" },
-  { flag: "🇮🇷", label: "Iranian" },
-  { flag: "🇮🇶", label: "Iraqi" },
-  { flag: "🇮🇪", label: "Irish" },
-  { flag: "🇮🇱", label: "Israeli" },
-  { flag: "🇮🇹", label: "Italian" },
-  { flag: "🇨🇮", label: "Ivorian" },
-  { flag: "🇯🇲", label: "Jamaican" },
-  { flag: "🇯🇵", label: "Japanese" },
-  { flag: "🇯🇴", label: "Jordanian" },
-  { flag: "🇰🇿", label: "Kazakh" },
-  { flag: "🇰🇪", label: "Kenyan" },
-  { flag: "🇰🇷", label: "Korean" },
-  { flag: "🇰🇼", label: "Kuwaiti" },
-  { flag: "🇰🇬", label: "Kyrgyz" },
-  { flag: "🇱🇻", label: "Latvian" },
-  { flag: "🇱🇧", label: "Lebanese" },
-  { flag: "🇱🇾", label: "Libyan" },
-  { flag: "🇱🇹", label: "Lithuanian" },
-  { flag: "🇱🇺", label: "Luxembourgish" },
-  { flag: "🇲🇾", label: "Malaysian" },
-  { flag: "🇲🇽", label: "Mexican" },
-  { flag: "🇲🇩", label: "Moldovan" },
-  { flag: "🇲🇦", label: "Moroccan" },
-  { flag: "🇲🇿", label: "Mozambican" },
-  { flag: "🇳🇵", label: "Nepalese" },
-  { flag: "🇳🇿", label: "New Zealander" },
-  { flag: "🇳🇬", label: "Nigerian" },
-  { flag: "🇳🇴", label: "Norwegian" },
-  { flag: "🇴🇲", label: "Omani" },
-  { flag: "🇵🇰", label: "Pakistani" },
-  { flag: "🇵🇸", label: "Palestinian" },
-  { flag: "🇵🇦", label: "Panamanian" },
-  { flag: "🇵🇪", label: "Peruvian" },
-  { flag: "🇵🇱", label: "Polish" },
-  { flag: "🇵🇹", label: "Portuguese" },
-  { flag: "🇶🇦", label: "Qatari" },
-  { flag: "🇷🇴", label: "Romanian" },
-  { flag: "🇷🇺", label: "Russian" },
-  { flag: "🇸🇦", label: "Saudi" },
-  { flag: "🇸🇳", label: "Senegalese" },
-  { flag: "🇷🇸", label: "Serbian" },
-  { flag: "🇸🇬", label: "Singaporean" },
-  { flag: "🇸🇰", label: "Slovak" },
-  { flag: "🇸🇮", label: "Slovenian" },
-  { flag: "🇿🇦", label: "South African" },
-  { flag: "🇪🇸", label: "Spanish" },
-  { flag: "🇱🇰", label: "Sri Lankan" },
-  { flag: "🇸🇩", label: "Sudanese" },
-  { flag: "🇸🇪", label: "Swedish" },
-  { flag: "🇨🇭", label: "Swiss" },
-  { flag: "🇸🇾", label: "Syrian" },
-  { flag: "🇹🇼", label: "Taiwanese" },
-  { flag: "🇹🇯", label: "Tajik" },
-  { flag: "🇹🇿", label: "Tanzanian" },
-  { flag: "🇹🇭", label: "Thai" },
-  { flag: "🇹🇳", label: "Tunisian" },
-  { flag: "🇹🇷", label: "Turkish" },
-  { flag: "🇺🇬", label: "Ugandan" },
-  { flag: "🇺🇦", label: "Ukrainian" },
-  { flag: "🇺🇾", label: "Uruguayan" },
-  { flag: "🇺🇿", label: "Uzbek" },
-  { flag: "🇻🇪", label: "Venezuelan" },
-  { flag: "🇻🇳", label: "Vietnamese" },
-  { flag: "🇾🇪", label: "Yemeni" },
-  { flag: "🇿🇲", label: "Zambian" },
-  { flag: "🇿🇼", label: "Zimbabwean" },
-].sort((a, b) => a.label.localeCompare(b.label));
+  "Afghan","Albanian","Algerian","Andorran","Angolan","Antiguan","Argentine",
+  "Armenian","Australian","Austrian","Azerbaijani","Bahamian","Bahraini",
+  "Bangladeshi","Barbadian","Belarusian","Belgian","Belizean","Beninese","Bhutanese",
+  "Bolivian","Bosnian","Botswanan","Brazilian","Bruneian","Bulgarian","Burkinabe",
+  "Burundian","Cabo Verdean","Cambodian","Cameroonian","Canadian","Central African",
+  "Chadian","Chilean","Chinese","Colombian","Comorian","Congolese","Costa Rican",
+  "Croatian","Cuban","Cypriot","Czech","Danish","Djiboutian","Dominican","Ecuadorian",
+  "Egyptian","Salvadoran","Equatorial Guinean","Eritrean","Estonian","Swazi",
+  "Ethiopian","Fijian","Finnish","French","Gabonese","Gambian","Georgian","German",
+  "Ghanaian","Greek","Grenadian","Guatemalan","Guinean","Guyanese","Haitian",
+  "Honduran","Hungarian","Icelandic","Indian","Indonesian","Iranian","Iraqi","Irish",
+  "Israeli","Italian","Jamaican","Japanese","Jordanian","Kazakhstani","Kenyan",
+  "Kiribati","Kuwaiti","Kyrgyz","Laotian","Latvian","Lebanese","Basotho","Liberian",
+  "Libyan","Liechtensteiner","Lithuanian","Luxembourgish","Malagasy","Malawian",
+  "Malaysian","Maldivian","Malian","Maltese","Marshallese","Mauritanian","Mauritian",
+  "Mexican","Micronesian","Moldovan","Monegasque","Mongolian","Montenegrin",
+  "Moroccan","Mozambican","Burmese","Namibian","Nauruan","Nepali","Dutch",
+  "New Zealander","Nicaraguan","Nigerien","Nigerian","North Korean","Macedonian",
+  "Norwegian","Omani","Pakistani","Palauan","Palestinian","Panamanian",
+  "Papua New Guinean","Paraguayan","Peruvian","Filipino","Polish","Portuguese",
+  "Qatari","Romanian","Russian","Rwandan","Kittitian","Saint Lucian","Vincentian",
+  "Samoan","San Marinese","Sao Tomean","Saudi","Senegalese","Serbian","Seychellois",
+  "Sierra Leonean","Singaporean","Slovak","Slovenian","Solomon Islander","Somali",
+  "South African","South Korean","South Sudanese","Spanish","Sri Lankan","Sudanese",
+  "Surinamese","Swedish","Swiss","Syrian","Taiwanese","Tajik","Tanzanian","Thai",
+  "Timorese","Togolese","Tongan","Trinidadian","Tunisian","Turkish","Turkmen",
+  "Tuvaluan","Ugandan","Ukrainian","Emirati","British","American","Uruguayan",
+  "Uzbek","Vanuatuan","Venezuelan","Vietnamese","Yemeni","Zambian","Zimbabwean",
+].sort((a, b) => a.localeCompare(b));
 
 const TRAVELER_TYPE: Record<string, string> = {
   culture:   "Cultural Explorer",
@@ -240,13 +157,35 @@ const TRAVELER_TYPE: Record<string, string> = {
 };
 
 const ORIGIN_COUNTRIES = [
-  "Australia", "Austria", "Belgium", "Brazil", "Canada", "China", "Czech Republic",
-  "Denmark", "Egypt", "Finland", "France", "Germany", "Greece", "Hungary", "India",
-  "Indonesia", "Ireland", "Israel", "Italy", "Japan", "Jordan", "Kenya", "Lebanon",
-  "Malaysia", "Mexico", "Morocco", "Netherlands", "Nigeria", "Norway", "Pakistan",
-  "Poland", "Portugal", "Romania", "Russia", "Saudi Arabia", "Singapore", "South Africa",
-  "Spain", "Sweden", "Switzerland", "Thailand", "Turkey", "Ukraine",
-  "United Arab Emirates", "United Kingdom", "United States", "Vietnam",
+  "Afghanistan","Albania","Algeria","Andorra","Angola","Antigua and Barbuda",
+  "Argentina","Armenia","Australia","Austria","Azerbaijan","Bahamas","Bahrain",
+  "Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bhutan","Bolivia",
+  "Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso",
+  "Burundi","Cabo Verde","Cambodia","Cameroon","Canada","Central African Republic",
+  "Chad","Chile","China","Colombia","Comoros","Congo","Costa Rica","Croatia","Cuba",
+  "Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic",
+  "Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini",
+  "Ethiopia","Fiji","Finland","France","Gabon","Gambia","Georgia","Germany","Ghana",
+  "Greece","Grenada","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Honduras",
+  "Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy",
+  "Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kuwait","Kyrgyzstan",
+  "Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania",
+  "Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta",
+  "Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova",
+  "Monaco","Mongolia","Montenegro","Morocco","Mozambique","Myanmar","Namibia",
+  "Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria",
+  "North Korea","North Macedonia","Norway","Oman","Pakistan","Palau","Palestine",
+  "Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal",
+  "Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia",
+  "Saint Vincent and the Grenadines","Samoa","San Marino","Sao Tome and Principe",
+  "Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore",
+  "Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","South Korea",
+  "South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland",
+  "Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga",
+  "Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda",
+  "Ukraine","United Arab Emirates","United Kingdom","United States","Uruguay",
+  "Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia",
+  "Zimbabwe",
 ];
 
 export const QuizPage: React.FC = () => {
@@ -297,7 +236,7 @@ export const QuizPage: React.FC = () => {
   const progress          = ((step + 1) / totalSteps) * 100;
 
   const filteredNats = NATIONALITIES.filter((n) =>
-    n.label.toLowerCase().includes(natInput.toLowerCase())
+    n.toLowerCase().includes(natInput.toLowerCase())
   );
 
   // Close dropdown on outside click
@@ -398,25 +337,30 @@ export const QuizPage: React.FC = () => {
             <p className="text-gray-400 text-sm mb-6">We'll factor in visa requirements and travel advisories for your passport.</p>
 
             <div ref={natRef} className="relative">
-              <input
-                type="text"
-                value={natInput}
-                onChange={(e) => { setNatInput(e.target.value); setShowDropdown(true); }}
-                onFocus={() => setShowDropdown(true)}
-                placeholder="Search nationality…"
-                className="w-full bg-[#073a6e]/60 border border-[#5bc4a0]/30 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-[#5bc4a0] text-sm"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={natInput}
+                  onChange={(e) => { setNatInput(e.target.value); setShowDropdown(e.target.value.length > 0); }}
+                  onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
+                  placeholder="Search nationality…"
+                  className="w-full bg-[#073a6e]/60 border border-[#5bc4a0]/30 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-[#5bc4a0] text-sm pr-8"
+                />
+                {natInput && (
+                  <button type="button" onClick={() => { setNatInput(""); setNationality(""); setShowDropdown(false); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-xs">✕</button>
+                )}
+              </div>
 
-              {showDropdown && filteredNats.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-[#042c53] border border-[#5bc4a0]/20 rounded-xl overflow-hidden z-50 max-h-64 overflow-y-auto shadow-xl">
+              {showDropdown && natInput.length > 0 && filteredNats.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[#042c53] border border-[#5bc4a0]/20 rounded-xl overflow-hidden z-50 max-h-[320px] overflow-y-auto shadow-xl">
                   {filteredNats.map((n) => (
                     <button
-                      key={n.label}
-                      onClick={() => handleNationalitySelect(n.label)}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-white hover:bg-[#073a6e] transition-colors"
+                      key={n}
+                      onClick={() => handleNationalitySelect(n)}
+                      className="w-full px-4 py-3 text-left text-sm text-white hover:bg-[#073a6e] transition-colors"
                     >
-                      <span className="text-xl">{n.flag}</span>
-                      <span>{n.label}</span>
+                      {n}
                     </button>
                   ))}
                 </div>
@@ -525,13 +469,17 @@ export const QuizPage: React.FC = () => {
                 <input
                   type="text"
                   value={originCountryInput}
-                  onChange={(e) => { setOriginCountryInput(e.target.value); setShowOriginDropdown(true); }}
-                  onFocus={() => setShowOriginDropdown(true)}
+                  onChange={(e) => { setOriginCountryInput(e.target.value); setShowOriginDropdown(e.target.value.length > 0); }}
+                  onBlur={() => setTimeout(() => setShowOriginDropdown(false), 150)}
                   placeholder="Search country…"
-                  className="w-full bg-[#073a6e]/60 border border-[#5bc4a0]/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#5bc4a0] text-sm"
+                  className="w-full bg-[#073a6e]/60 border border-[#5bc4a0]/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#5bc4a0] text-sm pr-8"
                 />
-                {showOriginDropdown && filteredOriginCountries.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-[#042c53] border border-[#5bc4a0]/20 rounded-xl overflow-hidden z-50 max-h-48 overflow-y-auto shadow-xl">
+                {originCountryInput && (
+                  <button type="button" onClick={() => { setOriginCountryInput(""); setOriginInput(""); setShowOriginDropdown(false); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-xs">✕</button>
+                )}
+                {showOriginDropdown && originCountryInput.length > 0 && filteredOriginCountries.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-[#042c53] border border-[#5bc4a0]/20 rounded-xl overflow-hidden z-50 max-h-[320px] overflow-y-auto shadow-xl">
                     {filteredOriginCountries.map(country => (
                       <button
                         key={country}
